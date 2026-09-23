@@ -1,0 +1,10 @@
+export const COMMENT_VALIDATION_CONSTRAINTS = {
+  ID: {
+    MIN_LENGTH: 1,
+    MAX_LENGTH: 100,
+  },
+  CONTENT: {
+    MIN_LENGTH: 20,
+    MAX_LENGTH: 300,
+  },
+};

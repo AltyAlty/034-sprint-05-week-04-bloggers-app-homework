@@ -1,0 +1,22 @@
+Настройка пакетного менеджера в WebStorm:
+1. Перейти Settings -> Languages & Frameworks -> JavaScript Runtime.
+2. Package manager - pnpm.
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+Настройка Prettier в WebStorm:
+1. Перейти Settings -> Languages & Frameworks -> JavaScript -> Prettier.
+2. Manual Prettier Configuration - ON.
+3. Run on 'Reformat Code' action - ON.
+4. Apply Prettier to files outside the prettier dependency scope - OFF.
+5. Run for files - добавить шаблон "json".
+6. Run on save - ON.
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+Настройка ESLint в WebStorm:
+1. Перейти Settings -> Languages & Frameworks -> JavaScript -> Code Quality Tools -> ESLint.
+2. Automatic ESLint configuration - ON.
+3. Run eslint --fix on save - ON.
+
+/*--------------------------------------------------------------------------------------------------------------------*/

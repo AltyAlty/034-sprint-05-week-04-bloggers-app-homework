@@ -1,0 +1,205 @@
+Модуль @nestjs/cqrs использует паттерны CQRS, Usecase и команда.
+
+В рамках паттерна Команда модуль @nestjs/cqrs использует его модифицированную версию - команды не реализуют метод
+"execute()" - этим занимаются обработчики команд и запросов. То есть получается так:
+1. Команды - это классы, которые инкапсулируют данные для выполнения операции.
+2. Получатели - это классы, которые знают как выполнить операцию и реализуют метод "execute()".
+3. Отправитель - это шины, которые вызывают метод "execute()".
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+Инструкция по работе с модулем @nestjs/cqrs:
+
+1. Подключить модуль "CqrsModule" из модуля @nestjs/cqrs при помощи метода "CqrsModule.forRoot()", который создает шины
+"CommandBus", "QueryBus", "EventBus" и внутренние реестры, например, в модуле "CoreModule":
+
+import { Global, Module } from '@nestjs/common';
+import { CqrsModule } from '@nestjs/cqrs';
+
+@Global()
+@Module({
+  imports: [CqrsModule.forRoot()],
+  exports: [CqrsModule],
+  providers: [],
+})
+export class CoreModule {}
+
+2. В дальнейшем для операций создания, изменения и удаления нужно создавать команды, а для операций чтения - запросы.
+
+3. Для работы с командой нужно прежде всего создать саму команду, которая представляет собой класс, имеющий только поля
+конструктора, повторяющие параметры метода сервиса, который бы обрабатывал операцию. Класс команды может наследоваться
+от класса "Command" из модуля @nestjs/cqrs, что позволит уточнить тип данных, возвращаемых обработчиком команды.
+
+Пример команды:
+
+export class CreateUserCommand extends Command<{ id: string }>{
+  constructor(public readonly name: string, public readonly email: string) {}
+}
+
+Далее нужно создать обработчик команды, который представляет из себя класс:
+- Помеченный декоратором "@CommandHandler()" из модуля @nestjs/cqrs, в параметрах которого нужно указывать команду.
+- Реализующий интерфейс "ICommandHandler" из модуля @nestjs/cqrs, в котором можно уточнить тип входных параметров
+обработчика команды, указав команду.
+- Содержащий в конструкторе сервисы, репозитории и прочий функционал, которые бы понадобились методу сервиса для
+обработки операции.
+- Содержащий публичный метод "execute()", получающий в параметрах команду и реализующий логику метода сервиса, который
+бы обрабатывал операцию.
+
+Обработчик команды это по сути частный пример usecase. Пример обработчика команды:
+
+import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { CreateUserCommand } from './create-user.command';
+
+@CommandHandler(CreateUserCommand)
+export class CreateUserHandler implements ICommandHandler<CreateUserCommand> {
+  constructor(private readonly usersRepository: UsersRepository) {}
+
+  async execute(command: CreateUserCommand) {
+    return this.usersRepository.save({ name: command.name, email: command.email });
+  }
+}
+
+Далее нужно указать обработчик команды в массиве "providers" модуля.
+
+Для работы с обработчиками команд используется шина "CommandBus" из модуля @nestjs/cqrs. Чтобы использовать шину
+"CommandBus" нужно:
+- Импортировать класс шины в файл с контроллером для типизации. Сама шина уже будет доступна через DI благодаря
+использованию декоратора "@Global()" в модуле "CoreModule".
+- Внедрить шину в контроллер.
+- В методе контроллера вызвать метод "execute()" шины, передав в него экземпляр команды.
+
+Пример использования обработчика команды в контроллере:
+
+@Post()
+async create(@Body() dto: CreateUserDto) {
+  return this.commandBus.execute(new CreateUserCommand(dto.name, dto.email));
+}
+
+4. Для работы с запросом нужно прежде всего создать сам запрос, который представляет собой класс, имеющий только поля
+конструктора, повторяющие параметры метода сервиса, который бы обрабатывал операцию чтения. Класс запроса может
+наследоваться от класса "Query" из модуля @nestjs/cqrs, что позволит уточнить тип данных, возвращаемых обработчиком
+запроса.
+
+Пример запроса:
+
+export class GetUserByIdQuery extends Query<UserDto> {
+  constructor(public readonly id: string) {}
+}
+
+Далее нужно создать обработчик запроса, который представляет из себя класс:
+- Помеченный декоратором "@QueryHandler()" из модуля @nestjs/cqrs, в параметрах которого нужно указывать запрос.
+- Реализующий интерфейс "IQueryHandler" из модуля @nestjs/cqrs, в котором можно уточнить тип входных параметров
+обработчика запроса, указав запрос.
+- Содержащий в конструкторе сервисы, репозитории и прочий функционал, которые бы понадобились методу сервиса для
+обработки операции чтения.
+- Содержащий публичный метод "execute()", получающий в параметрах запрос и реализующий логику метода сервиса, который бы
+обрабатывал операцию чтения.
+
+Обработчик запроса это по сути частный пример usecase. Пример обработчика запроса:
+
+import { QueryHandler, IQueryHandler } from '@nestjs/cqrs';
+import { GetUserByIdQuery } from './get-user-by-id.query';
+
+@QueryHandler(GetUserByIdQuery)
+export class GetUserByIdHandler implements IQueryHandler<GetUserByIdQuery> {
+  constructor(private readonly usersQueryRepository: UsersQueryRepository) {}
+
+  async execute(query: GetUserByIdQuery) {
+    return this.usersQueryRepository.findById(query.id);
+  }
+}
+
+Далее нужно указать обработчик запроса в массиве "providers" модуля.
+
+Для работы с обработчиками запросов используется шина "QueryBus" из модуля @nestjs/cqrs. Чтобы использовать шину
+"QueryBus" нужно:
+- Импортировать класс шины в файл с контроллером для типизации. Сама шина уже будет доступна через DI благодаря
+использованию декоратора "@Global()" в модуле "CoreModule".
+- Внедрить шину в контроллер.
+- В методе контроллера вызвать метод "execute()" шины, передав в него экземпляр запроса.
+
+Пример использования обработчика запроса в контроллере:
+
+@Get(':id')
+async findOne(@Param('id') id: string) {
+  return this.queryBus.execute(new GetUserByIdQuery(id));
+}
+
+5. Для уведомления других частей системы о том, что отработала какая-то команда, используются события. Например, если
+во время регистрации пользователя нужно отправить письмо пользователя с кодом подтверждения пользователя, то в
+обработчике команды вместо внедрения и использования менеджера по работе с почтой создается экземпляр события, который
+уведомит менеджер по работе с почтой о необходимости отправить письмо.
+
+События
+публикуются внутри обработчиков команд после успешного выполнения операции.
+
+Для работы с событием нужно прежде всего создать само событие, которое представляет собой класс, имеющий только поля
+конструктора, содержащие данные, которые потребуются для работы уведомляемой части приложения. Название класса события
+должно быть в прошедшем времени. Класс события может наследоваться от класса "Event" из модуля @nestjs/cqrs.
+
+Пример события:
+
+export class UserCreatedEvent extends Event {
+  constructor(public readonly confirmationCode: string) {}
+}
+
+Далее нужно создать обработчик события, который представляет из себя класс:
+- Помеченный декоратором "@EventsHandler()" из модуля @nestjs/cqrs, в параметрах которого нужно указывать событие.
+- Реализующий интерфейс "IEventHandler" из модуля @nestjs/cqrs, в котором можно уточнить тип входных параметров
+обработчика события, указав событие.
+- Содержащий в конструкторе сервисы, репозитории и прочий функционал, которые бы понадобились для работы уведомляемой
+части приложения.
+- Содержащий публичный метод "handle()", получающий в параметрах событие и реализующий логику для работы уведомляемой
+части приложения. Ошибки внутри этого метода не могут быть пойманы фильтрами исключений, поэтому их необходимо
+обрабатывать вручную, например, при помощи try/catch.
+
+В отличие от команд и запросов, у одного события может быть несколько обработчиков, каждый из которых выполняет свою
+независимую логику для работы уведомляемых частей приложения.
+
+Пример обработчика события:
+
+import { EventsHandler, IEventHandler } from '@nestjs/cqrs';
+import { UserCreatedEvent } from './user-created.event';
+
+@EventsHandler(UserCreatedEvent)
+export class SendWelcomeEmailHandler implements IEventHandler<UserCreatedEvent> {
+  constructor(private readonly mailManager: MailManager) {}
+
+  async handle(event: UserCreatedEvent) {
+    await this.mailManager.sendCompleteRegistrationEmail(event.confirmationCode);
+  }
+}
+
+Далее нужно указать обработчик события в массиве "providers" модуля.
+
+Далее нужно использовать обработчик события в обработчике команды. Для этого используется шина "EventBus" из модуля
+@nestjs/cqrs. Чтобы использовать шину "EventBus" нужно:
+- Импортировать класс шины в файл с обработчиком команды для типизации. Сама шина уже будет доступна через DI благодаря
+использованию декоратора "@Global()" в модуле "CoreModule".
+- Внедрить шину в конструкторе обработчика команды.
+- В методе "execute()" обработчика команды после успешного выполнения операции вызвать метод "publish()" шины, передав в
+него экземпляр события. Метод "publish()" не ждет обработчики событий, то есть когда обработчики событий запускаются,
+метод "execute()" обработчика команды не ждет их завершения и сразу продолжает выполняться.
+- Если необходимо, то один обработчик команды может прослушивать сразу несколько событий.
+
+Пример публикации события внутри обработчика команды:
+
+import { CommandHandler, ICommandHandler, EventBus } from '@nestjs/cqrs';
+import { CreateUserCommand } from './create-user.command';
+import { UserCreatedEvent } from './user-created.event';
+
+@CommandHandler(CreateUserCommand)
+export class CreateUserHandler implements ICommandHandler<CreateUserCommand> {
+  constructor(
+    private readonly usersRepository: UsersRepository,
+    private readonly eventBus: EventBus,
+  ) {}
+
+  async execute(command: CreateUserCommand) {
+    const user = await this.usersRepository.save({ name: command.name, email: command.email });
+    this.eventBus.publish(new UserCreatedEvent('abc123'));
+    return user;
+  }
+}
+
+/*--------------------------------------------------------------------------------------------------------------------*/

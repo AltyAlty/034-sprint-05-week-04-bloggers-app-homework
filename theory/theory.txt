@@ -1,0 +1,518 @@
+Урок:
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+Установка версии приложения с использованием Express.js и MongoDB:
+1. Инициализация проекта: pnpm init
+2. Установка зависимостей (если необходимо): pnpm install
+3. Установка Express.js: pnpm add express
+4. Установка TypeScript (пока нужна версия <7 для TS-Jest): pnpm add -D typescript@6.0.3
+5. Инициализация файла "tsconfig.json" (если необходимо): pnpm tsc --init
+6. Установка типов для Node.js: pnpm add -D @types/node
+7. Установка типов для Express.js: pnpm add -D @types/express
+8. Установка Jest: pnpm add -D jest
+9. Установка типов для Jest: pnpm add -D @types/jest
+10. Установка TS-Jest: pnpm add -D ts-jest
+11. Установка Supertest: pnpm add -D supertest
+12. Установка типов для Supertest: pnpm add -D @types/supertest
+13. Установка ESLint: pnpm add -D eslint
+14. Установка @typescript-eslint/eslint-plugin: pnpm add -D @typescript-eslint/eslint-plugin
+15. Установка @typescript-eslint/parser: pnpm add -D @typescript-eslint/parser
+16. Установка Prettier: pnpm add -D prettier
+17. Установка eslint-plugin-prettier: pnpm add -D eslint-plugin-prettier
+18. Установка eslint-config-prettier: pnpm add -D eslint-config-prettier
+19. Установка nodemon: pnpm add -D nodemon
+20. Установка swagger-jsdoc: pnpm add swagger-jsdoc
+21. Установка типов для swagger-jsdoc: pnpm add -D @types/swagger-jsdoc
+22. Установка swagger-ui-express: pnpm add swagger-ui-express
+23. Установка типов для swagger-ui-express: pnpm add -D @types/swagger-ui-express
+24. Установка express-validator: pnpm add express-validator
+25. Установка драйвера MongoDB для Node.js: pnpm add mongodb
+26. Установка Dotenv: pnpm add dotenv
+27. Установка bcrypt: pnpm add bcrypt
+28. Установка типов для bcrypt: pnpm add -D @types/bcrypt
+29. Установка @node-rs/argon2: pnpm add @node-rs/argon2
+30. Установка jsonwebtoken: pnpm add jsonwebtoken
+31. Установка типов для jsonwebtoken: pnpm add -D @types/jsonwebtoken
+32. Установка nodemailer: pnpm add nodemailer
+33. Установка типов для nodemailer: pnpm add -D @types/nodemailer
+34. Установка MongoDB Memory Server: pnpm add -D mongodb-memory-server
+35. Установка date-fns: pnpm add date-fns
+36. Установка ts-node: pnpm add -D ts-node
+37. Установка cookie-parser: pnpm add cookie-parser
+38. Установка типов для cookie-parser: pnpm add -D @types/cookie-parser
+39. Установка cors: pnpm add cors
+40. Установка типов для cors: pnpm add -D @types/cors
+41. Установка InversifyJS: pnpm add inversify
+42. Установка reflect-metadata: pnpm add reflect-metadata
+43. Установка Mongoose: pnpm add mongoose
+44. Установка babel-jest: pnpm add -D babel-jest
+45. Установка ядра компилятора Babel: pnpm add -D @babel/core
+46. Установка пресета плагинов для Babel: pnpm add -D @babel/preset-env
+47. Установка inversify-inject-decorators: pnpm add inversify-inject-decorators
+48. Установка eslint-plugin-simple-import-sort: pnpm add -D eslint-plugin-simple-import-sort
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+Установка версии приложения с использованием NestJS, MongoDB и PostgreSQL:
+1. Установка Nest CLI глобально (если необходимо): npm install -g @nestjs/cli
+2. Создание проекта на NestJS при помощи установленного глобально Nest CLI (если необходимо): nest new app_name
+3. Создание проекта на NestJS без установленного глобально Nest CLI (если необходимо): npx @nestjs/cli@latest new app_name
+4. Установка зависимостей (если необходимо): pnpm install
+5. Установка ESLint: pnpm add -D eslint
+6. Установка typescript-eslint: pnpm add -D typescript-eslint
+7. Установка @typescript-eslint/eslint-plugin: pnpm add -D @typescript-eslint/eslint-plugin
+8. Установка @typescript-eslint/parser: pnpm add -D @typescript-eslint/parser
+9. Установка @eslint/js: pnpm add -D @eslint/js
+10. Установка globals: pnpm add -D globals
+11. Установка eslint-plugin-prettier: pnpm add -D eslint-plugin-prettier
+12. Установка eslint-config-prettier: pnpm add -D eslint-config-prettier
+13. Установка eslint-plugin-simple-import-sort: pnpm add -D eslint-plugin-simple-import-sort
+14. Установка @nestjs/config: pnpm add @nestjs/config
+15. Установка Dotenv: pnpm add dotenv
+16. Установка cross-env: pnpm add -D cross-env
+17. Установка Mongoose: pnpm add mongoose
+18. Установка @nestjs/mongoose: pnpm add @nestjs/mongoose
+19. Установка class-validator: pnpm add class-validator
+20. Установка class-transformer: pnpm add class-transformer
+21. Установка @nestjs/swagger: pnpm add @nestjs/swagger
+22. Установка swagger-ui-express: pnpm add swagger-ui-express
+23. Установка MongoDB Memory Server: pnpm add -D mongodb-memory-server
+24. Установка date-fns: pnpm add date-fns
+25. Установка bcrypt: pnpm add bcrypt
+26. Установка типов для bcrypt: pnpm add -D @types/bcrypt
+27. Установка @node-rs/argon2: pnpm add @node-rs/argon2
+28. Установка Passport.js: pnpm add passport
+29. Установка @nestjs/passport: pnpm add @nestjs/passport
+30. Установка passport-local: pnpm add passport-local
+31. Установка типов для passport-local: pnpm add -D @types/passport-local
+32. Установка @nestjs/jwt: pnpm add @nestjs/jwt
+33. Установка passport-jwt: pnpm add passport-jwt
+34. Установка типов для passport-jwt: pnpm add -D @types/passport-jwt
+35. Установка nodemailer: pnpm add nodemailer
+36. Установка типов для nodemailer: pnpm add -D @types/nodemailer
+37. Установка @nestjs-modules/mailer: pnpm add @nestjs-modules/mailer
+38. Установка cookie-parser: pnpm add cookie-parser
+39. Установка типов для cookie-parser: pnpm add -D @types/cookie-parser
+40. Установка типов для @nestjs/cqrs: pnpm add @nestjs/cqrs
+41. Установка типов для @nestjs/throttler: pnpm add @nestjs/throttler
+42. Установка pg: pnpm add pg
+43. Установка типов для pg: pnpm add -D @types/pg
+44. Установка TypeORM: pnpm add typeorm
+45. Установка @nestjs/typeorm: pnpm add @nestjs/typeorm
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+Скрипты для версии приложения с использованием Express.js и MongoDB:
+1. Компиляция TS-файлов из папки "src" в папку "dist" в режиме наблюдения (-w): pnpm watch
+2. Запуск приложения при помощи nodemon, следя за изменениями в скомпилированном коде в папке "dist": pnpm dev
+3. Запуск тестов при помощи Jest: pnpm jest
+4. Форматирование кода при помощи Prettier: pnpm format
+5. Запуск проверки кода при помощи ESLint и автоматического исправления части ошибок: pnpm lint
+6. Компиляция TS-файлов из папки "src" в папку "dist". Нужно для деплоя на vercel.com: pnpm build
+7. Запуск приложения, нужно для деплоя на vercel.com: pnpm start
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+Скрипты для версии приложения с использованием NestJS и MongoDB:
+1. Создание модуля: nest g module modules/module_name.
+2. Создание контроллера без файла для тестов: nest g controller modules/module_name --no-spec.
+3. Создание сервиса без файла для тестов: nest g service modules/module_name --no-spec.
+4. Получить все команды, генерирующие шаблонные сущности: nest g --help.
+5. Быстрое развертывание приложения в облаке (требует заранее подготовленных инфраструктуры и конфигов): nest deploy
+6. Компиляция TS-файлов из папки "src" в папку "dist" с использованием файла "tsconfig.build.json": nest build
+7. Форматирование кода при помощи Prettier: prettier --write "src/**/*.ts" "__tests__/**/*.ts"
+8. Запуск проверки кода при помощи ESLint и автоматического исправления части ошибок: eslint "{src,apps,libs,__tests__}/**/*.ts" --fix
+9. Запуск проверки кода при помощи Oxlint: oxlint src/ __test__/
+10. Запуск приложения: nest start
+11. Запуск приложения в режиме наблюдения: cross-env NODE_ENV=development nest start --watch
+12. Запуск приложения в режиме наблюдения c открытием порта для подключения отладчика: cross-env NODE_ENV=development nest start --debug --watch
+13. Запуск приложения из папки "dist": node dist/main
+14. Запуск тестов при помощи Jest: jest
+15. Запуск тестов при помощи Jest в режиме наблюдения: jest --watch
+16. Запуск тестов при помощи Jest c генерацией отчета о покрытии кода: jest --coverage
+17. Запуск пошаговой отладки тестов в IDE: node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+Настройка конфигурационных файлов для версии приложения с использованием Express.js и MongoDB:
+1. Файл "package.json": настройка полей "main", "scripts" и "packageManager", удаление разделов "devEngines" и "type".
+2. Файл "tsconfig.json" содержит основные настройки TS для разработки. Для работы пакета reflect-metadata включены
+параметры "Experimental Decorators" и "Emit Decorator Metadata":
+"experimentalDecorators": true,
+"emitDecoratorMetadata": true,
+3. Файл "tsconfig.test.json" содержит отдельные настройки TS для тестов:
+3.1 Берет все базовые настройки из файла "tsconfig.json".
+3.2 TS проверяет типы, но не генерирует файлы .js.
+3.3 Корнем проекта для этого конфига становится папка проекта (где лежит tsconfig). Это позволяет включать и папку
+"src", и папку "__tests__", даже если они на одном уровне, и убирает конфликт вида "файл вне rootDir".
+3.4 В тестовый проект входят весь код приложения из папки "src" и все тесты из папки "__tests__".
+4. Файл "jest.config.ts" содержит настройки Jest. Запускаются тесты только из папки "__tests__/integration/".
+5. Файл "eslint.config.mjs" содержит настройки ESLint:
+5.1 Игнорируем папки "node_modules" и "dist".
+5.2 Используем TS парсер.
+5.3 Используем TS плагин и Prettier плагин.
+5.4 Проверяем только файлы .ts.
+5.5 Показываем ошибку, если форматирование не по правилам Prettier.
+5.6 Показываем предупреждение для неиспользуемых переменных.
+5.7 Показываем ошибку, если используется == или !=.
+5.8 Отключаем правила ESLint, которые конфликтуют с Prettier.
+5.9 В разделе "rules" добавлен раздел "simple-import-sort/imports" для настройки правил сортировки импортов при помощи
+плагина eslint-plugin-simple-import-sort.
+6. Файл ".prettierrc" содержит следующие правила:
+6.1 Ставим точку с запятой в конце каждого выражения.
+6.2 Используем одинарные кавычки вместо двойных.
+6.3 Добавляем запятую после последнего элемента только в массивах и объектах.
+6.4 Переносим код длиннее 120 символов на новую строку.
+6.5 Используем два пробела для одного уровня отступа.
+6.6 Добавляем пробелы внутри фигурных скобок.
+6.7 Не ставим скобки вокруг аргумента стрелочной функции, если аргумент всего один.
+7. Файл ".prettierignore" указывает какие файлы и папки должен игнорировать Prettier.
+8. Файл "pnpm-workspace.yaml" создан автоматически после использования pnpm версии 11+. Этот файл нужен для конфигурации
+монорепозиториев, то есть когда в одной папке несколько проектов. В этом файле есть секция "allowBuilds" необходимая для
+настройки политик безопасности, поскольку теперь pnpm требует явного разрешения на выполнение post-install-скриптов
+сборки для некоторых пакетов, которые потенциально могут выполнять вредоносный код. Например, для пакета @scarf/scarf
+явно указано false, так как это пакет для аналитики.
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+Настройка конфигурационных файлов для версии приложения с использованием NestJS и MongoDB:
+1. Файл "package.json": удален раздел "jest".
+2. Файл "tsconfig.json" содержит основные настройки TS для разработки.
+3. Файл "tsconfig.build.json" содержит настройки TS для финальной сборки приложения.
+4. Файл "jest.config.ts" содержит настройки Jest.
+5. Файл "eslint.config.mjs" содержит настройки ESLint.
+6. Файл ".prettierrc" содержит следующие правила:
+6.1 Ставим точку с запятой в конце каждого выражения.
+6.2 Используем одинарные кавычки вместо двойных.
+6.3 Добавляем запятую после последнего элемента только в массивах и объектах.
+6.4 Переносим код длиннее 120 символов на новую строку.
+6.5 Используем два пробела для одного уровня отступа.
+6.6 Добавляем пробелы внутри фигурных скобок.
+6.7 Не ставим скобки вокруг аргумента стрелочной функции, если аргумент всего один.
+7. Файл ".prettierignore" указывает какие файлы и папки должен игнорировать Prettier.
+8. Файл "pnpm-workspace.yaml" создан автоматически после использования pnpm версии 11+. Этот файл нужен для конфигурации
+монорепозиториев, то есть когда в одной папке несколько проектов. В этом файле есть секция "allowBuilds" необходимая для
+настройки политик безопасности, поскольку теперь pnpm требует явного разрешения на выполнение post-install-скриптов
+сборки для некоторых пакетов, которые потенциально могут выполнять вредоносный код. Например, для пакета @scarf/scarf
+явно указано false, так как это пакет для аналитики.
+9. Файл "nest-cli.json" содержит настройки Nest CLI:
+9.1 Указываем ссылку на схему для автодополнения и проверки структуры этого JSON-файла.
+9.2 Указываем набор шаблонов (schematics) для генерации кода (контроллеров, сервисов) как "@nestjs/schematics".
+9.3 Определяем корневую папку с исходным кодом проекта как "src".
+9.4 Указываем, чтобы автоматически очищалась папка "dist" перед каждой новой сборкой.
+9.5 Подключаем плагин для автоматической генерации документации Swagger.
+9.6 Указываем расширения файлов, которые плагин будет сканировать как DTO.
+9.7 Указываем автоматически определять типы и обязательность полей на основе библиотеки class-validator.
+9.8 Превращаем обычные JSDoc-комментарии в описания полей в Swagger.
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+Настройка переменных окружения при помощи библиотеки Dotenv для версии приложения с использованием Express.js и MongoDB:
+1. Создать файл ".env" в корне проекта.
+2. Указать этот файл в файле ".gitignore".
+3. В файле точки входа в приложение (index.ts) и в каждом файле с тестами обязательно самой первой строкой добавить:
+"import 'dotenv/config';".
+4. В файле ".env" указать нужные переменные, используя двойные кавычки и не используя пробелы.
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+Настройка Swagger для версии приложения с использованием Express.js и MongoDB:
+1. Файл "/src/core/swagger/setup-swagger.util.ts" - создание функции для инициализации документации Swagger.
+2. Файл "/src/setup-app.util.ts" - вызов функции для инициализации документации Swagger.
+3. Во всех роутерах добавить путь "/app/".
+4. Во всех тестах добавить путь "/app/".
+5. Создать вручную файлы .yml, описывающие документацию Swagger:
+5.1 Файл "/src/auth/swagger/openapi.swagger.yml".
+5.2 Файл "/src/blogs/docs/blogs.swagger.yml".
+5.3 Файл "/src/comments/docs/posts.swagger.yml".
+5.4 Файл "/src/core/swagger/openapi.swagger.yml".
+5.5 Файл "/src/posts/docs/posts.swagger.yml".
+5.6 Файл "/src/security-devices/docs/testing.swagger.yml".
+5.7 Файл "/src/testing/docs/testing.swagger.yml".
+5.8 Схожие файлы для других сущностей.
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+Настройка деплоя приложения на vercel.com для версии приложения с использованием Express.js и MongoDB:
+1. Создать файл "vercel.json".
+2. В файл "package.json" добавить скрипты:
+2.1 "build": "tsc".
+2.2 "start": "node dist/index.js".
+3. Залогиниться на vercel.com.
+4. Выбрать "Add New..." - "Project".
+5. Выбрать "Continue with GitHub".
+6. Импортировать нужный репозиторий.
+7. Указать "Application Preset" как "Express".
+8. Указать "Build Command" как "pnpm build".
+9. Указать "Output Directory" как "dist".
+10. Указать "Install Command" как "pnpm install".
+
+Настройка Swagger, чтобы он корректно отображался и работал на vercel.com:
+1. Использовать файл "setup-swagger.util.ts" вместо файла "setup-swagger-original.util.ts".
+2. В файле "vercel.json" добавить, чтобы не игнорировались файлы .yml:
+"builds": [
+    {
+      "config": {
+        "includeFiles": ["src/**/*.swagger.yml"]
+      }
+    }
+  ]
+
+Документация Swagger находится по пути "/api".
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+Структура версии приложения с использованием Express.js и MongoDB:
+0.1 "/src/index.ts" - точка входа приложения.
+0.2 "/src/setup-app.util.ts" - настройка приложения.
+
+1. "/src/auth/" - код, связанный с аутентификацией и авторизацией.
+1.1 "/src/auth/adapters/argon2.adapter.ts" - адаптер для работы с библиотекой @node-rs/argon2.
+1.2 "/src/auth/adapters/bcrypt.adapter.ts" - адаптер для работы с библиотекой bcrypt.
+1.3 "/src/auth/adapters/jwt.adapter.ts" - адаптер для работы с библиотекой jsonwebtoken.
+1.4 "/src/auth/adapters/nodemailer.adapter.ts" - адаптер для работы с библиотекой nodemailer.
+1.5 "/src/auth/application/auth.service.ts" - сервис для работы с аутентификацией и авторизацией.
+1.6 "/src/auth/application/types/" - доменные типы для аутентификации и авторизации.
+1.7 "/src/auth/docs/auth.swagger.yml" - документация Swagger для аутентификации и авторизации.
+1.8 "/src/auth/email/email-examples.ts" - шаблоны email.
+1.9 "/src/auth/middlewares/guard-middlewares/access-token.guard-middleware.ts.ts" - guard-middleware для проверки AT.
+1.10 "/src/auth/middlewares/guard-middlewares/basic-auth.guard-middleware.ts" - guard-middleware для basic авторизации.
+1.11 "/src/auth/middlewares/guard-middlewares/access-token.guard-middleware.ts.ts" - guard-middleware для проверки
+опционального AT.
+1.12 "/src/auth/middlewares/guard-middlewares/refresh-token.guard-middleware.ts.ts" - guard-middleware для проверки RT.
+1.13 "/src/auth/middlewares/guard-middlewares/request-rate-limit.guard-middleware.ts" - guard-middleware для
+лимитирования запросов.
+1.14 "/src/auth/repositories/auth.repository.ts" - репозиторий для работы с аутентификацией и авторизацией.
+1.15 "/src/auth/repositories/mappers/" - функции-преобразователи для работы с аутентификацией и авторизацией.
+1.16 "/src/auth/repositories/models/" - модели MongoDB для сущностей в БД для аутентификации и авторизации.
+1.17 "/src/auth/repositories/types/" - типы для сущностей в БД для аутентификации и авторизации.
+1.18 "/src/auth/routes/auth.router.ts" - роутер для работы с аутентификацией и авторизацией.
+1.19 "/src/auth/routes/auth.controller.ts" - контроллер для работы с аутентификацией и авторизацией.
+1.20 "/src/auth/routes/input-dto/" - Input DTO для работы с аутентификацией и авторизацией.
+1.21 "/src/auth/routes/output-dto/" - Output DTO для работы с аутентификацией и авторизацией.
+1.22 "/src/auth/validation/auth-input-validation.middlewares.ts" - валидационные middlewares для входных данных при
+работе с аутентификацией и авторизацией.
+
+2. "/src/blogs/" - код, связанный с блогами.
+2.1 "/src/blogs/application/blogs.service.ts" - сервис для работы с блогами.
+2.2 "/src/blogs/application/blogs.query-service.ts" - query-сервис для работы с блогами.
+2.3 "/src/blogs/application/types/" - доменные типы для блогов.
+2.4 "/src/blogs/docs/blogs.swagger.yml" - документация Swagger для блогов.
+2.5 "/src/blogs/repositories/blogs.repository.ts" - репозиторий для работы с блогами в БД.
+2.6 "/src/blogs/repositories/blogs.query-repository.ts" - query-репозиторий для работы с блогами в БД.
+2.7 "/src/blogs/repositories/mappers/" - функции-преобразователи для работы с блогами из БД.
+2.8 "/src/blogs/repositories/models/" - модели MongoDB для блогов в БД.
+2.9 "/src/blogs/repositories/types/" - типы для блогов в БД.
+2.10 "/src/blogs/routes/blogs.router.ts" - роутер для работы с блогами.
+2.11 "/src/blogs/routes/blogs.controller.ts" - контроллер для работы с блогами.
+2.12 "/src/blogs/routes/input-dto/" - Input DTO для блогов.
+2.13 "/src/blogs/routes/output-dto/" - Output DTO для блогов.
+2.14 "/src/blogs/validation/blogs-input-validation.middlewares.ts" - валидационные middlewares для входных данных при
+работе с блогами.
+
+3. "/src/comments/" - код, связанный с комментариями.
+3.1 "/src/comments/application/comments.service.ts" - сервис для работы с комментариями.
+3.2 "/src/comments/application/comments.query-service.ts" - query-сервис для работы с комментариями.
+3.3 "/src/comments/application/types/" - доменные типы для комментариев.
+3.4 "/src/comments/docs/comments.swagger.yml" - документация Swagger для комментариев.
+3.5 "/src/comments/repositories/comments.repository.ts" - репозиторий для работы с комментариями в БД.
+3.6 "/src/comments/repositories/comments.query-repository.ts" - query-репозиторий для работы с комментариями в БД.
+3.7 "/src/comments/repositories/mappers/" - функции-преобразователи для работы с комментариями из БД.
+3.8 "/src/comments/repositories/models/" - модели MongoDB для комментариев в БД.
+3.9 "/src/comments/repositories/types/" - типы для комментариев в БД.
+3.10 "/src/comments/routes/comments.router.ts" - роутер для работы с комментариями.
+3.11 "/src/comments/routes/comments.controller.ts" - контроллер для работы с комментариями.
+3.12"/src/comments/routes/input-dto/" - Input DTO для комментариев.
+3.13 "/src/comments/routes/output-dto/" - Output DTO для комментариев.
+3.14 "/src/comments/validation/comments-input-validation.middlewares.ts" - валидационные middlewares для входных данных
+при работе с комментариями.
+
+4. "/src/core/" - общий код для всего приложения.
+4.1 "/src/core/errors/" - код, связанный с ошибками.
+4.2 "/src/core/middlewares/validation/input-validation-result.middleware.ts" - валидационный middleware для формирования
+ошибок валидации для отправки клиенту.
+4.3 "/src/core/middlewares/validation/pagination-validation.middleware.ts" - валидационный middleware для проверки
+настроек пагинации в query-параметрах запросов.
+4.4 "/src/core/middlewares/validation/params-id-validation.middlewares.ts" - валидационные middlewares для проверки
+различных ID в запросах.
+4.5 "/src/core/settings/settings.ts" - глобальные настройки приложения.
+4.6 "/src/core/swagger/openapi.swagger.yml" - документация Swagger для приложения.
+4.7 "/src/core/swagger/setup-swagger.util.ts" - настройка Swagger для приложения.
+4.8 "/src/core/swagger/setup-swagger-original.util.ts" - настройка Swagger для приложения.
+4.9 "/src/core/types/" - общие типы приложения.
+4.10 "/src/core/types/pagination" - типы для пагинации.
+4.11 "/src/core/types/result" - типы для ResultObject.
+4.12 "/src/core/types/validation" - типы для валидации.
+4.13 "/src/core/utils/email/" - утилиты для нормализации email.
+4.14 "/src/core/utils/pagination/" - утилиты для пагинации.
+4.15 "/src/core/utils/result/" - утилиты для ResultObject.
+
+5. "/src/db/" - код, связанный с БД.
+5.1 "/src/db/mongodb/mongo.db.ts" - код, связанный с MongoDB.
+5.2 "/src/db/mongodb/data/db/" - локальная БД MongoDB.
+
+6. "src/ioc/" - код, связанный с IoC-контейнером.
+6.1 "src/ioc/types.ts" - типы для IoC-контейнера.
+6.2 "src/ioc/container.ts" - создание IoC-контейнера.
+6.3 "src/ioc/decorators.ts" - дополнительные декораторы для использования в IoC-контейнере.
+6.4 "src/ioc/composition-root.ts" - сборка IoC-контейнера.
+
+7. "/src/posts/" - код, связанный с постами.
+7.1 "/src/posts/application/posts.service.ts" - сервис для работы с постами.
+7.2 "/src/posts/application/posts.query-service.ts" - query-сервис для работы с постами.
+7.3 "/src/posts/application/types/" - доменные типы для постов.
+7.4 "/src/posts/docs/posts.swagger.yml" - документация Swagger для постов.
+7.5 "/src/posts/repositories/posts.repository.ts" - репозиторий для работы с постами в БД.
+7.6 "/src/posts/repositories/posts.query-repository.ts" - query-репозиторий для работы с постами в БД.
+7.7 "/src/posts/repositories/mappers/" - функции-преобразователи для работы с постами из БД.
+7.8 "/src/posts/repositories/models/" - модели MongoDB для постов в БД.
+7.9 "/src/posts/repositories/types/" - типы для постов в БД.
+7.10 "/src/posts/routes/posts.router.ts" - роутер для работы с постами.
+7.11 "/src/posts/routes/posts.controller.ts" - контроллер для работы с постами.
+7.12 "/src/posts/routes/input-dto/" - Input DTO для постов.
+7.13 "/src/posts/routes/output-dto/" - Output DTO для постов.
+7.14 "/src/posts/validation/posts-input-validation.middlewares.ts" - валидационные middlewares для входных данных при
+работе с постами.
+
+8. "/src/security-devices/" - код, связанный с устройствами пользователей.
+8.1 "/src/security-devices/application/security-devices.service.ts" - сервис для работы с устройствами пользователей.
+8.2 "/src/security-devices/application/security-devices.query-service.ts" - query-сервис для работы с устройствами
+пользователей.
+8.3 "/src/security-devices/application/types/" - доменные типы для устройств пользователей.
+8.4 "/src/security-devices/docs/security-devices.swagger.yml" - документация Swagger для устройств пользователей.
+8.5 "/src/security-devices/repositories/security-devices.repository.ts" - репозиторий для работы с устройствами
+пользователей в БД.
+8.6 "/src/security-devices/repositories/security-devices.query-repository.ts" - query-репозиторий для работы с
+устройствами пользователей в БД.
+8.7 "/src/security-devices/repositories/mappers/" - функции-преобразователи для работы с устройствами пользователей из
+БД.
+8.8 "/src/security-devices/repositories/models/" - модели MongoDB для устройств пользователей в БД.
+8.9 "/src/security-devices/repositories/types/" - типы для устройств пользователей в БД.
+8.10 "/src/security-devices/routes/security-devices.router.ts" - роутер для работы с устройствами пользователей.
+8.11 "/src/security-devices/routes/security-devices.controller.ts" - контроллер для работы с устройствами пользователей.
+8.12 "/src/security-devices/routes/input-dto/" - Input DTO для устройств пользователей.
+8.13 "/src/security-devices/routes/output-dto/" - Output DTO для устройств пользователей.
+
+9. "/src/testing/" - код, связанный с тестированием приложения.
+9.1 "/src/testing/docs/testing.swagger.yml" - документация Swagger для тестирования.
+9.2 "/src/testing/routes/testing.router.ts" - роутер для тестирования приложения.
+9.3 "/src/testing/routes/testing.controller.ts" - контроллер для тестирования приложения.
+
+10. "/src/users/" - код, связанный с пользователями.
+10.1 "/src/users/application/users.service.ts" - сервис для работы с пользователями.
+10.2 "/src/users/application/users.query-service.ts" - query-сервис для работы с пользователями.
+10.3 "/src/users/application/types/" - доменные типы для пользователей.
+10.4 "/src/users/docs/users.swagger.yml" - документация Swagger для пользователей.
+10.5 "/src/users/repositories/users.repository.ts" - репозиторий для работы с пользователями в БД.
+10.6 "/src/users/repositories/users.query-repository.ts" - query-репозиторий для работы с пользователями в БД.
+10.7 "/src/users/repositories/mappers/" - функции-преобразователи для работы с пользователями из БД.
+10.8 "/src/users/repositories/models/" - модели MongoDB для пользователей в БД.
+10.8 "/src/users/repositories/types/" - типы для пользователей в БД.
+10.9 "/src/users/routes/users.router.ts" - роутер для работы с пользователями.
+10.9 "/src/users/routes/users.controller.ts" - контроллер для работы с пользователями.
+10.11 "/src/users/routes/input-dto/" - Input DTO для пользователей.
+10.12 "/src/users/routes/output-dto/" - Output DTO для пользователей.
+10.13 "/src/users/validation/users-input-validation.middlewares.ts" - валидационные middlewares для входных данных при
+работе пользователями.
+
+11. "/__tests__/" - код, связанный с тестированием приложения.
+11.1 "/__tests__/integration/" - интеграционные тесты.
+11.2 "/__tests__/setup/" - настройка тестов.
+11.3 "/__tests__/test-date/" - данные, используемые в тестировании приложения.
+11.4 "/__tests__/test-doubles/" - моки и шпионы, используемые в тестировании приложения.
+11.5 "/__tests__/utils/" - утилиты, используемые в тестировании приложения.
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+Структура версии приложения с использованием NestJS и MongoDB:
+0.1 "/src/main.ts" - точка входа приложения.
+0.2 "/src/app.module.ts" - главный обязательный модуль "AppModule".
+0.3 "/src/app.controller.ts" - необязательный контроллер для модуля "AppModule".
+0.4 "/src/app.service.ts" - необязательный сервис для модуля "AppModule".
+0.5 "/src/config.module.ts" - конфигурационный модуль для работы с файлами ".env".
+
+1. "/src/core/" - общий код для всего приложения.
+1.1 "/src/core/core.module.ts" - глобальный модуль, предоставляющий общий функционал для всего приложения.
+1.2 "/src/core/config/core.config.ts" - конфигурация по работе с переменными окружения необходимыми для общей работы приложения.
+1.3 "/src/core/decorators/transforamtion/" - декораторы, использующие библиотеку class-transformer.
+1.4 "/src/core/exception-filters/domain/domain.exception-filter.ts" - фильтр исключений "DomainException".
+1.5 "/src/core/exceptions/domain/domain.exception.ts" - класс исключений "DomainException".
+1.6 "/src/core/guards/access-jwt-auth/" - гард для авторизации по Access JWT.
+1.7 "/src/core/guards/basic-auth/basic-auth.guard.ts" - гард для basic авторизации.
+1.8 "/src/core/guards/ip-and-user-agent/ip-and-user-agent.guard.ts" - гард для проверки наличия заголовка "user-agent" и IP-адреса пользователя в объекте запроса.
+1.9 "/src/core/guards/local-auth/" - гард для авторизации по логину и паролю.
+1.10 "/src/core/guards/optional-access-jwt-auth/" - гард для опциональной авторизации по Access JWT.
+1.11 "/src/core/guards/refresh-jwt-auth/" - гард для авторизации по Refresh JWT.
+1.12 "/src/core/guards/request-rate-limiting/request-rate-limiting.guard.ts" - гард для ограничения частоты запросов.
+1.13 "/src/core/modules/notification/notification.module.ts" - модуль для работы с уведомлениями.
+1.14 "/src/core/modules/notification/config/notification.config.ts" - конфигурация по работе с переменными окружения необходимыми для работы с уведомлениями.
+1.15 "/src/core/modules/notification/config/notification-config.module.ts" - вспомогательный модуль для раздачи переменных из класса "NotificationConfig".
+1.16 "/src/core/modules/notification/email-manager/email.manager.ts" - менеджер для работы с библиотекой nodemailer.
+1.17 "/src/core/pagiantion/input-dto/" - Input DTO для пагинации.
+1.18 "/src/core/pagiantion/output-dto/" - Output DTO для пагинации.
+1.19 "/src/core/security/cryptography/argon2.adapter.ts" - адаптер для работы с библиотекой @node-rs/argon2.
+1.20 "/src/core/security/cryptography/bcrypt.adapter.ts" - адаптер для работы с библиотекой bcrypt.
+1.21 "/src/core/settings/settings.ts" - глобальные настройки приложения.
+1.22 "/src/core/swagger/decorators/" - декораторы для документации Swagger.
+1.23 "/src/core/swagger/types/swagger-sort-enums.ts" - дополнительные типы для документации Swagger.
+1.24 "/src/core/utils/config/config-validation.util.ts" - утилиты для конфигураций по работе с переменными окружения.
+1.25 "/src/core/utils/email/normalize-email.util.ts" - утилита для нормализации email домена Google.
+1.26 "/src/core/validation/constraints/" - параметры ограничений для валидации.
+1.27 "/src/core/validation/types/" - типы для валидации.
+
+2. "/src/db/mongodb/data/db/" - локальная БД MongoDB.
+
+3. "/src/modules/" - основные модули приложения.
+
+3.1 "/src/modules/blog/" - код для модуля для блогов, постов и комментариев.
+3.1.1 "/src/modules/blog/blog.module.ts" - модуль для блогов, постов и комментариев.
+3.1.2 "/src/modules/blog/api/blogs/" - контроллер, Input DTO и Output DTO для блогов.
+3.1.3 "/src/modules/blog/api/comments/" - контроллер, Input DTO и Output DTO для комментариев.
+3.1.4 "/src/modules/blog/api/posts/" - контроллер, Input DTO и Output DTO для постов.
+3.1.5 "/src/modules/blog/application/blogs/" - сервисы для блогов.
+3.1.6 "/src/modules/blog/application/comments/" - сервисы для комментариев.
+3.1.7 "/src/modules/blog/application/posts/" - сервисы для постов.
+3.1.8 "/src/modules/blog/domain/blogs/" - схемы, модели, типы документов, Domain DTO, типы моделей и сущность для блогов.
+3.1.9 "/src/modules/blog/domain/comments/" - схемы, модели, типы документов, Domain DTO, типы моделей и сущности для комментариев и данных о лайках комментариев.
+3.1.10 "/src/modules/blog/domain/posts/" - схемы, модели, типы документов, Domain DTO, типы моделей и сущности для постов и данных о лайках постов.
+3.1.11 "/src/modules/blog/infrastructure/blogs/" - репозитории для блогов.
+3.1.12 "/src/modules/blog/infrastructure/comments/" - репозитории для комментариев.
+3.1.13 "/src/modules/blog/infrastructure/posts/" - репозитории для постов.
+
+3.2 "/src/modules/user/" - код для модуля для пользователей.
+3.2.1 "/src/modules/user/user.module.ts" - модуль для пользователей.
+3.2.2 "/src/modules/user/api/auth/" - контроллер, декораторы, Input DTO и Output DTO для работы с аутентификацией и авторизацией.
+3.2.3 "/src/modules/user/api/security-devices/" - контроллер, Input DTO и Output DTO для пользовательских устройств.
+3.2.4 "/src/modules/user/api/users/" - контроллер, Input DTO и Output DTO для пользователей.
+3.2.5 "/src/modules/user/application/auth/" - сервисы для для работы с аутентификацией и авторизацией.
+3.2.6 "/src/modules/user/application/security-devices/" - сервисы для пользователей.
+3.2.7 "/src/modules/user/application/users/" - сервисы для пользовательских устройств.
+3.2.8 "/src/modules/user/config/auth.config.ts" - конфигурация по работе с переменными окружения необходимыми для аутентификации и авторизации.
+3.2.9 "/src/modules/user/config/auth-config.module.ts" - вспомогательный модуль для раздачи переменных из класса "AuthConfig".
+3.2.10 "/src/modules/user/domain/auth/" - схемы, модели, типы документов, Domain DTO, типы моделей и сущности для работы с аутентификацией и авторизацией.
+3.2.11 "/src/modules/user/domain/security-devices/" - схемы, модели, типы документов, Domain DTO, типы моделей и сущность для пользовательских устройств.
+3.2.12 "/src/modules/user/domain/users/" - схемы, модели, типы документов, Domain DTO, типы моделей и сущность для пользователей.
+3.2.13 "/src/modules/user/infrastructure/auth/" - репозитории для работы с аутентификацией и авторизацией.
+3.2.14 "/src/modules/user/infrastructure/security-devices/" - репозитории для пользователей.
+3.2.15 "/src/modules/user/infrastructure/users/" - репозитории для пользовательских устройств.
+
+4. "/src/setup/" - код для конфигурирования приложения.
+4.1 "/src/setup/app.setup.ts" - функция для конфигурирования экземпляров приложения NestJS.
+4.2 "/src/setup/global-prefix.setup.ts" - функция для установки глобального префикса ко всем маршрутам приложения.
+4.3 "/src/setup/pipes.setup.ts" - функция для настройки pipes в приложении.
+4.4 "/src/setup/swagger.setup.ts" - функция для генерации документации Swagger.
+
+5. "/src/testing/" - код для модуля для тестирования приложения.
+5.1 "/src/testing/testing.module.ts" - модуль для тестирования приложения.
+5.2 "/src/testing/api/testing.controller.ts" - контроллер для тестирования приложения.
+5.3 "/src/testing/application/testing.service.ts" - сервис для для тестирования приложения.
+
+6. "/__tests__/" - код, связанный с тестированием приложения.
+6.1 "/__tests__/integration/" - интеграционные тесты.
+6.2 "/__tests__/setup/" - настройка тестов.
+6.3 "/__tests__/test-date/" - данные, используемые в тестировании приложения.
+6.4 "/__tests__/test-doubles/" - моки и шпионы, используемые в тестировании приложения.
+6.5 "/__tests__/utils/" - утилиты, используемые в тестировании приложения.
+
+/*--------------------------------------------------------------------------------------------------------------------*/

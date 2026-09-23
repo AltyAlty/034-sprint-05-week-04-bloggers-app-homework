@@ -1,0 +1,762 @@
+Этапы жизненного цикла запроса в NestJS:
+
+1. Incoming request.
+
+2. Middlewares.
+2.1. Globally bound middlewares.
+2.2. Module bound middlewares.
+
+3. Guards.
+3.1 Global guards.
+3.2 Controller guards.
+3.3 Route guards.
+
+4. Interceptors (pre-controller).
+4.1 Global interceptors.
+4.2 Controller interceptors.
+4.3 Route interceptors.
+
+5. Pipes.
+5.1 Global pipes.
+5.2 Controller pipes.
+5.3 Route pipes.
+5.4 Route parameter pipes.
+
+6. Controllers.
+
+7. Services (if exists).
+
+8. Repositories (if exists).
+
+9. Interceptors (post-request).
+9.1 Route interceptors.
+9.2 Controller interceptors.
+9.3 Global interceptors.
+
+10. Exception filters (оборачивают весь цикл).
+10.1 Route filters.
+10.2 Controller filters.
+10.3 Global filters.
+
+11. Server response.
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+Middlewares в NestJS - это функции, которые вызываются перед обработчиками маршрутов. Middlewares имеют доступ к
+объектам запроса и ответа, а также к функции "next()". Middlewares по умолчанию эквивалентны middlewares из Express.js:
+1. Могут выполнять любой код.
+2. Могут вносить изменения в объекты запроса и ответа.
+3. Могут завершать цикл запрос-ответ.
+4. Могут вызывать следующий middleware.
+5. Если текущий middleware не завершает цикл запрос-ответ, то он должен вызвать функцию "next()" для передачи управления
+следующему middleware. В противном случае запрос останется незавершенным.
+
+Middlewares используются гораздо реже в NestJS, чем в Express.js. В основном middlewares в NestJS используются для
+следующего:
+1. Глобальное логирование.
+2. Установка HTTP-заголовков безопасности или парсинга сырого тела запроса.
+3. Интеграция старых пакетов из Express.js.
+4. Проксирование и редиректы.
+
+Middlewares в NestJS выполняются в определенной последовательности. Сначала NestJS запускает globally bound middlewares
+(например, указанные в методе "app.use()"), а затем уже module bound middlewares, то есть middlewares указанные в
+модулях. Middlewares выполняется последовательно в порядке их привязки, аналогично тому, как работают middlewares в
+Express.js. В случае middlewares, привязанных к разным модулям, сначала будут выполнены middlewares, привязанные к
+корневому модулю, а затем уже module bound middlewares в порядке добавления модулей в массив "imports" корневого модуля.
+
+Middlewares в NestJS можно создавать либо в виде функций, либо в виде классов, используя декоратор "@Injectable()".
+Причем класс должен реализовывать интерфейс "NestMiddleware" из NestJS. Middlewares полностью поддерживает DI. Пример
+module bound middleware:
+
+import { Injectable, NestMiddleware } from '@nestjs/common';
+import { Request, Response, NextFunction } from 'express';
+
+@Injectable()
+export class LoggerMiddleware implements NestMiddleware {
+  use(req: Request, res: Response, next: NextFunction) {
+    console.log('Request...');
+    next();
+  }
+}
+
+Нужно помнить, что Express.js и Fastify по-разному обрабатывают middlewares и предоставляют разные сигнатуры методов для
+них.
+
+Пример подключения middleware в модуле:
+
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
+import { LoggerMiddleware } from './common/middleware/logger.middleware';
+import { CatsModule } from './cats/cats.module';
+
+@Module({
+  imports: [CatsModule],
+})
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(LoggerMiddleware)
+      .forRoutes('cats');
+  }
+}
+
+В этом примере:
+1. Middlewares подключаются при помощи метода "configure()" класса модуля. Модули, содержащие middlewares, должны
+реализовывать интерфейс "NestModule" из NestJS. Метод "configure()" можно сделать асинхронным.
+2. Класс "MiddlewareConsumer" - это вспомогательный класс из NestJS, предоставляющий встроенные методы для управления
+middlewares. Эти методы могут быть объединены в цепочку.
+3. Метод "apply()" применяет middlewares. Этот метод может принимать либо один middleware, либо несколько.
+4. Метод "forRoutes()" конкретизирует где именно нужно применять middlewares. Этот метод может принимать одну строку,
+несколько строк, объект типа "RouteInfo", класс контроллера или несколько классов контроллеров.
+
+Middlewares в NestJS можно устанавливать на маршрутах, основанных на шаблонах. В следующем примере middleware будет
+выполняться для любого маршрута, начинающегося с "blogs/" (вместо "splat" можно использовать что угодно):
+
+forRoutes({
+  path: 'blogs/*splat',
+  method: RequestMethod.ALL,
+});
+
+Чтобы путь "blogs/" без дополнительных символов тоже соответствовал маршруту, нужно заключить "*splat" в фигурные
+скобки:
+
+forRoutes({
+  path: 'blogs/{*splat}',
+  method: RequestMethod.ALL,
+});
+
+Метод "exclude()" позволяет исключать маршруты для middlewares. Этот метод может принимать одну строку, несколько строк
+или объект "RouteInfo":
+
+consumer
+  .apply(LoggerMiddleware)
+  .exclude(
+    { path: 'cats', method: RequestMethod.GET },
+    { path: 'cats', method: RequestMethod.POST },
+    'cats/{*splat}',
+  )
+  .forRoutes(CatsController);
+
+Пример middleware в виде функции:
+
+import { Request, Response, NextFunction } from 'express';
+
+export function logger(req: Request, res: Response, next: NextFunction) {
+  console.log(`Request...`);
+  next();
+};
+
+Чтобы привязать несколько middlewares, выполняемых последовательно, нужно указать список, разделенный запятыми, внутри
+метода "apply()": "consumer.apply(cors(), helmet(), logger).forRoutes(CatsController)".
+
+Чтобы сделать globally bound middleware, то есть привязать middleware ко всем зарегистрированным маршрутам одновременно,
+нужно использовать метод "use()", предоставляемый экземпляром интерфейсы "INestApplication" из NestJS:
+
+const app = await NestFactory.create(AppModule);
+app.use(logger);
+
+Доступ к DI-контейнеру через globally bound middleware невозможен. Вместо этого можно использовать middleware в виде
+функции при вызове метода "app.use()". В качестве альтернативы можно использовать middleware в виде класса и обращаться
+к нему при помощи ".forRoutes('*')" внутри модуля.
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+Guards (гарды) в NestJS - это классы, помеченные декоратором "@Injectable()" и реализующие интерфейс "CanActivate" из
+NestJS, которые имеют задачу определять будет ли данный запрос обработан обработчиком маршрута или нет, в зависимости от
+определенных условий. Гарды часто используются для авторизации и аутентификации.
+
+В Express.js для авторизации и аутентификации часто используются middlewares, но они не могут знать, какой обработчик
+будет выполнен после вызова функции "next()". Гарды в NestJS имеют доступ к экземпляру "ExecutionContext" и, поэтому
+точно знают, что будет выполнено дальше. Гарды предназначены для того, чтобы можно было вставлять логику обработки точно
+в нужный момент цикла запрос-ответ, и делать это декларативно.
+
+Гарды в NestJS выполняются после всех middlewares, но перед interceptors (перехватчиками) или pipes (пайпами).
+
+Пример гарда для авторизации:
+
+import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import { Observable } from 'rxjs';
+
+@Injectable()
+export class AuthGuard implements CanActivate {
+  canActivate(
+    context: ExecutionContext,
+  ): boolean | Promise<boolean> | Observable<boolean> {
+    const request = context.switchToHttp().getRequest();
+    return validateRequest(request);
+  }
+}
+
+Гарды в NestJS должны реализовывать функцию "canActivate()". Эта функция должна возвращать логическое значение,
+указывающее, разрешено ли дальнейшее выполнение текущего запроса. Она может возвращать ответ как синхронно, так и
+асинхронно. Если возвращается true, то запрос будет обработан, иначе NestJS отклонит запрос.
+
+Функция "canActivate()" принимает один аргумент - это экземпляр интерфейса "ExecutionContext" из NestJS, который
+наследуется от интерфейса "ArgumentsHost" из NestJS. В приведенном выше примере используются вспомогательные методы,
+определенные в интерфейсе "ArgumentsHost", чтобы получить ссылку на объект запроса. Расширяя интерфейс "ArgumentsHost",
+интерфейс "ExecutionContext" также добавляет несколько вспомогательных методов, которые предоставляют дополнительные
+сведения о текущем процессе выполнения.
+
+Гарды в NestJS могут использоваться на уровне контроллера (controller guards), на уровне маршрута (route guards) или на
+глобальном уровне (global guards). Гарды в NestJS выполняются в определенной последовательности. Сначала NestJS
+запускает глобальные гарды, затем гарды контроллеров, а в конце гарды маршрутов. Пример использования гарда контроллера
+"RolesGuard" при помощи декоратора "@UseGuards()":
+
+@Controller('cats')
+@UseGuards(RolesGuard)
+export class CatsController {}
+
+При указании в декораторе "@UseGuards()" класса, ответственность за создание экземпляра и работу с DI перекладывается на
+NestJS. Но можно передать экземпляр на месте: "@UseGuards(new RolesGuard())".
+
+Для настройки глобальных гардов нужно использовать метод "useGlobalGuards()" экземпляра приложения NestJS:
+
+const app = await NestFactory.create(AppModule);
+app.useGlobalGuards(new RolesGuard());
+
+GГлобальные гарды, зарегистрированные при помощи метода "useGlobalGuards()", не могут внедрять зависимости, поскольку
+это будет делаться вне контекста какого-либо модуля. Чтобы решить эту проблему, можно настроить гард непосредственно из
+любого модуля, используя следующую конструкцию:
+
+import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
+
+@Module({
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
+    },
+  ],
+})
+export class AppModule {}
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+Interceptors (перехватчики) в NestJS - это классы, помеченные декоратором "@Injectable()" и реализующие интерфейс
+"NestInterceptor" из NestJS, обычно используемые для следующего:
+1. Привязка дополнительной логики до или после выполнения метода.
+2. Преобразование результата, возвращаемого функцией.
+3. Преобразование исключения, выбрасываемого функцией.
+4. Расширение базового поведения функции.
+5. Полное переопределение функции в зависимости от конкретных условий.
+
+Перехватчики в NestJS должны реализовывать функцию "intercept()", принимающую два аргумента, где первым является
+экземпляр интерфейса "ExecutionContext", который наследуется от интерфейса "ArgumentsHost". Второй аргумент функции
+"intercept()" - это экземпляр интерфейса "CallHandler". Интерфейс "CallHandler" реализует метод "handle()", который
+можно использовать для вызова метода обработчика маршрута в какой-то момент работы перехватчика. Если не вызвать метод
+"handle()" внутри метода "intercept()", то метод обработчика маршрута никогда не будет выполнен.
+
+Это позволяет реализовывать собственную логику как до, так и после выполнения окончательного обработчика маршрута. Чтобы
+повлиять на то, что будет происходить после выполнения обработчика, метод "handle()" возвращает экземпляр класса
+"Observable" из библиотеки RxJS, что позволяет использовать операторы из библиотеки RxJS для дальнейшего управления
+ответом. Вызов метода "handle()" называется Pointcut, указывая на то, что это точка, в которую вставляется
+дополнительная логика. Метод "intercept()" может быть как синхронным, так и асинхронным. Пример перехватчика:
+
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
+import { Observable } from 'rxjs';
+import { tap } from 'rxjs/operators';
+
+@Injectable()
+export class LoggingInterceptor implements NestInterceptor {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+    console.log('Before...');
+
+    const now = Date.now();
+    return next
+      .handle()
+      .pipe(
+        tap(() => console.log(`After... ${Date.now() - now}ms`)),
+      );
+  }
+}
+
+В приведенном выше примере был использован оператор "tap()" из библиотеки RxJS, который вызывает анонимную функцию
+логирования при корректном или аварийном завершении потока "Observable", но при этом не вмешивается в цикл обработки
+ответа.
+
+Интерфейс "NestInterceptor<T, R>" из NestJS - это интерфейс, в котором "T" обозначает тип "Observable<T>",
+поддерживающего поток ответа, а "R" - тип значения, заключенного в "Observable<R>".
+
+Перехватчики в NestJS могут использоваться на уровне контроллера (controller guards), на уровне маршрута (route guards)
+или на глобальном уровне (global guards). Поскольку перехватчики возвращают экземпляр класса "Observable" из
+библиотеки RxJS, то входящие запросы будут проходить через стандартный порядок обработки - глобальный уровень, затем
+уровень контроллеров, и затем уровень маршрутов - когда ответ уже будет обрабатываться в обратном порядке.
+
+Для настройки перехватчиков в NestJS используется декоратор "@UseInterceptors()" из NestJS:
+
+@UseInterceptors(LoggingInterceptor)
+export class CatsController {}
+
+При указании в декораторе "@UseInterceptors()" класса, ответственность за создание экземпляра и работу с DI
+перекладывается на NestJS. Но можно передать экземпляр на месте: "@UseInterceptors(new LoggingInterceptor())".
+
+Для глобальных перехватчиков нужно использовать метод "useGlobalInterceptors()" экземпляра приложения NestJS:
+
+const app = await NestFactory.create(AppModule);
+app.useGlobalInterceptors(new LoggingInterceptor());
+
+Глобальные перехватчики, зарегистрированные при помощи метода "useGlobalInterceptors()", не могут внедрять зависимости,
+поскольку это будет делаться вне контекста какого-либо модуля. Чтобы решить эту проблему, можно настроить перехватчик
+непосредственно из любого модуля, используя следующую конструкцию:
+
+import { Module } from '@nestjs/common';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+
+@Module({
+  providers: [
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: LoggingInterceptor,
+    },
+  ],
+})
+export class AppModule {}
+
+Чтобы изменять каждый ответ можно использовать оператор "map()" из библиотеки RxJS:
+
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
+import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
+
+export interface Response<T> {
+  data: T;
+}
+
+@Injectable()
+export class TransformInterceptor<T> implements NestInterceptor<T, Response<T>> {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<Response<T>> {
+    return next.handle().pipe(map(data => ({ data })));
+  }
+}
+
+Чтобы переопределять исключения можно использовать оператор "catchError()" из библиотеки RxJS:
+
+import {
+  Injectable,
+  NestInterceptor,
+  ExecutionContext,
+  BadGatewayException,
+  CallHandler,
+} from '@nestjs/common';
+import { Observable, throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+
+@Injectable()
+export class ErrorsInterceptor implements NestInterceptor {
+  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+    return next
+      .handle()
+      .pipe(
+        catchError(err => throwError(() => new BadGatewayException())),
+      );
+  }
+}
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+Pipes (пайпы) в NestJS - это классы, помеченные декоратором "@Injectable()" и реализующие интерфейс "PipeTransform" из
+NestJS, обычно используемые для следующего:
+1. Преобразование входных данных в желаемую форму.
+2. Валидация входных данных.
+
+Пайпы в NestJS работают с аргументами, обрабатываемыми обработчиком маршрута контроллера:
+1. NestJS вставляет пайп непосредственно перед вызовом метода.
+2. Пайп получает аргументы, предназначенные для метода (body, query или params), и работает с ними.
+3. Пайп совершает операцию преобразования или валидации.
+4. Вызывается обработчик маршрута с преобразованными аргументами.
+
+NestJS поставляется с рядом встроенных пайпов, но также можно создавать свои собственные пайпы.
+
+Пайпы похожи на middlewares, но пайпы не срабатывают на весь запрос, а только конкретно на аргументы метода контроллера
+прямо перед тем, как они попадут в него. Также пайпы знают, какой метод контроллера будет вызван, когда middlewares не
+могут этого знать.
+
+Когда пайп генерирует исключение, ни один метод контроллера впоследствии не выполняется.
+
+Список встроенных пайпов в NestJS:
+1. ValidationPipe: валидирует DTO на соответствие правилам из библиотеки class-validator.
+2. ParseIntPipe: проверяет, является ли строка числом, и преобразует ее в целое число.
+3. ParseFloatPipe: проверяет, является ли строка числом, и преобразует ее в число с плавающей точкой.
+4. ParseBoolPipe: проверяет, является ли строка "true", "1", "false" или "0", и преобразует ее в boolean.
+5. ParseArrayPipe: проверяет, можно ли вообще превратить входные данные в массив, и соответствует ли каждый элемент
+этого массива заданным правилам.
+6. ParseUUIDPipe: проверяет, является ли строка валидным UUID.
+7. ParseEnumPipe: проверяет, что значение входит в указанный Enum.
+8. DefaultValuePipe: подставляет значение по умолчанию, если клиент ничего не прислал.
+9. ParseFilePipe: проверяет размер файла, расширение и MIME-тип.
+10. ParseDatePipe: проверяет, является ли строка корректной датой в формате ISO, и преобразует ее в объект Date.
+
+Пайпы в NestJS могут использоваться на уровне контроллера (controller pipes), на уровне маршрута (route pipes), на
+уровне параметров маршрута (route parameter pipes) или на глобальном уровне (global pipes).
+
+Для использования пайпа необходимо привязывать экземпляр класса пайпа к соответствующему контексту. Пример привязки
+пайпа на уровне параметра маршрута (таким образом можно привязывать все Parse* pipes из NestJS):
+
+@Get(':id')
+async findOne(@Param('id', ParseIntPipe) id: number) {
+  return this.catsService.findOne(id);
+}
+
+При указании класса пайпа, ответственность за создание экземпляра и работу с DI перекладывается на NestJS. Но можно
+передать экземпляр на месте, что может быть полезно, если нужно настроить поведение встроенного пайпа, передав
+параметры:
+
+@Get(':id')
+async findOne(
+  @Param('id', new ParseIntPipe({ errorHttpStatusCode: HttpStatus.NOT_ACCEPTABLE }))
+  id: number,
+) {
+  return this.catsService.findOne(id);
+}
+
+При использовании пайпа "ParseUUIDPipe()" из NestJS анализируется UUID версии 3, 4 или 5. Если нужно валидировать UUID
+определенной версии, то ее нужно указывать в параметрах пайпа.
+
+Каждый пайп должен реализовывать метод "transform()" для выполнения условий контракта интерфейса "PipeTransform" из
+NestJS. Этот метод имеет два параметра:
+1. Параметр "value" - это значение, обрабатываемое в данный момент.
+2. Параметр "metadata" - это метаданные значения, обрабатываемого в данный момент.
+
+Объект метаданных обладает следующими свойствами:
+
+export interface ArgumentMetadata {
+  type: 'body' | 'query' | 'param' | 'custom';
+  metatype?: Type<unknown>;
+  data?: string;
+}
+
+В объекте метаданных:
+1. "type" указывает, является ли аргумент телом запроса ("@Body()"), запросом ("@Query()"), параметром ("@Param()") или
+пользовательским параметром.
+2. "metatype" указывает мета-тип аргумента. Будет указывать на undefined, если либо будет отсутствовать объявление типа
+в сигнатуре метода обработчика маршрута, либо будет использоваться чистый JS.
+3. "data" указывает строку, передаваемую декоратору. Будет указывать на undefined, если скобки декоратора останутся
+пустыми.
+
+Интерфейс "PipeTransform<T, R>" из NestJS - это интерфейс, который должен быть реализован каждым пайпом. В этом
+интерфейсе "T" используется для обозначения типа входного значения, а "R"- для обозначения типа возвращаемого значения
+метода "transform()".
+
+Пример создания валидационного пайпа:
+
+import { PipeTransform, Injectable, ArgumentMetadata, BadRequestException } from '@nestjs/common';
+import { validate } from 'class-validator';
+import { plainToInstance } from 'class-transformer';
+
+@Injectable()
+export class ValidationPipe implements PipeTransform<any> {
+  async transform(value: any, { metatype }: ArgumentMetadata) {
+    if (!metatype || !this.toValidate(metatype)) {
+      return value;
+    }
+
+    const object = plainToInstance(metatype, value);
+    const errors = await validate(object);
+
+    if (errors.length > 0) {
+      throw new BadRequestException('Validation failed');
+    }
+
+    return value;
+  }
+
+  private toValidate(metatype: Function): boolean {
+    const types: Function[] = [String, Boolean, Number, Array, Object];
+    return !types.includes(metatype);
+  }
+}
+
+В этом примере:
+1. Метод "transform()" помечен как асинхронный, так как NestJS поддерживает как синхронные, так и асинхронные пайпы.
+Этот метод делается асинхронным, так как некоторые проверки из библиотеки class-validator могут быть асинхронными.
+2. Вспомогательная функция "toValidate()" отвечает за пропуск этапа проверки, когда обрабатываемый аргумент является
+собственным типом JS, так как к таким типам нельзя прикреплять декораторы проверки, поэтому нет смысла пропускать их
+через этап проверки.
+3. Используется функция "plainToInstance()" из библиотеки class-transformer для преобразования обычного объекта
+аргумента JS в типизированный объект, чтобы можно было применять валидацию. Причина, по которой это необходимо,
+заключается в том, что десериализованный входящий объект тела POST-запроса не содержит никакой информации о типе, потому
+что так работает базовая платформа (например, Express.js). Библиотека class-validator должна использовать декораторы
+валидации, которые должны были быть определены для DTO ранее, поэтому необходимо выполнять указанное преобразование,
+чтобы можно было обрабатывать входящий объект тела как соответствующим образом декорированный объект, а не как простой
+JS-объект.
+
+Пример привязки пайпа на уровне маршрута:
+
+@Post()
+async create(
+  @Body(new ValidationPipe()) createCatDto: CreateCatDto,
+) {
+  this.catsService.create(createCatDto);
+}
+
+Пример привязки пайпа на глобальном уровне при помощи метода "useGlobalPipes()":
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+  app.useGlobalPipes(new ValidationPipe());
+  await app.listen(process.env.PORT ?? 3000);
+}
+
+bootstrap();
+
+Глобальные пайпы, зарегистрированные при помощи метода "useGlobalPipes()", не могут внедрять зависимости, поскольку это
+будет делаться вне контекста какого-либо модуля. Чтобы решить эту проблему, можно настроить пайп непосредственно из
+любого модуля, используя следующую конструкцию:
+
+import { Module } from '@nestjs/common';
+import { APP_PIPE } from '@nestjs/core';
+
+@Module({
+  providers: [
+    {
+      provide: APP_PIPE,
+      useClass: ValidationPipe,
+    },
+  ],
+})
+export class AppModule {}
+
+Декоратор "@UsePipes()" используется для привязки пайпов на уровнях маршрута и контроллера.
+
+Пайпы следуют стандартной последовательности работы от глобального уровня к уровню контроллера, а затем к уровню
+маршрута, с принципом FIFO в отношении параметров в декораторе "@UsePipes()". Однако на уровне параметров маршрута, если
+запущено несколько пайпов, то они будут выполняться в порядке от последнего параметра к первому. Это также относится к
+пайпам на уровнях маршрута и контроллера:
+
+@UsePipes(GeneralValidationPipe)
+@Controller('cats')
+export class CatsController {
+  constructor(private catsService: CatsService) {}
+
+  @UsePipes(RouteSpecificPipe)
+  @Patch(':id')
+  updateCat(
+    @Body() body: UpdateCatDTO,
+    @Param() params: UpdateCatParams,
+    @Query() query: UpdateCatQuery,
+  ) {
+    return this.catsService.updateCat(body, params, query);
+  }
+}
+
+В указанном примере пайп "GeneralValidationPipe" будет выполняться для параметра "query", затем для параметра "params",
+и затем для параметра "body", прежде чем перейти к пайпу "RouteSpecificPipe", который будет следовать тому же порядку.
+Если бы существовали какие-либо пайпы, специфичные для параметров, они бы выполнялись (от последнего к первому
+параметру) после пайпов на уровнях контроллера и маршрута.
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+NestJS поставляется со встроенным слоем exception filters (фильтры исключений), который отвечает за обработку всех по
+какой-то причине необработанных исключений в приложении.
+
+Фильтры исключений в NestJS могут использоваться на уровне контроллера (controller exception filters), на уровне
+маршрута (route exception filters) или на глобальном уровне (global exception filters). Фильтры исключений в NestJS не
+обрабатывают сначала глобальные исключения, вместо этого они обрабатываются на самом низком возможном уровне. То есть
+выполнение начинается с фильтров исключений маршрутов, затем выполняются фильтры исключений контроллеров, а затем уже
+глобальные фильтры исключений. Исключения не могут передаваться между фильтрами исключений и единственный способ
+добиться подобного эффекта - это использовать наследование между фильтрами исключений.
+
+По умолчанию обработка исключений выполняется встроенным глобальным фильтром исключений, который обрабатывает исключения
+класса "HttpException" из NestJS и его подклассов. Если исключение не является ни экземпляром класса "HttpException" из
+NestJS, ни экземпляром класса, наследующегося от него, то встроенный глобальный фильтр исключений генерирует следующий
+JSON-ответ по умолчанию:
+
+{
+  "statusCode": 500,
+  "message": "Internal server error"
+}
+
+Глобальный фильтр исключений частично поддерживает библиотеку http-errors, что означает, что любое выброшенное
+исключение, содержащее свойства "statusCode" и "message", будет корректно заполнено и отправлено обратно в качестве
+ответа, вместо стандартного исключения класса "InternalServerErrorException" из NestJS для нераспознанных исключений.
+
+NestJS предоставляет встроенный класс "HttpException". Для типичных приложений, использующих HTTP REST/GraphQL API,
+рекомендуется отправлять стандартные объекты HTTP-ответа при возникновении определенных ошибок.
+
+Конструктор "HttpException" принимает два обязательных аргумента, определяющих ответ:
+1. "response": определяет тело JSON-ответа. Может быть строкой или объектом.
+2. "status": определяет код состояния HTTP.
+
+По умолчанию тело JSON-ответа содержит два свойства:
+1. "statusCode": по умолчанию соответствует коду состояния HTTP, указанному в аргументе "status".
+2. "message": краткое описание ошибки HTTP на основе статуса.
+
+Чтобы переопределить только часть сообщения в теле JSON-ответа, нужно указать строку в аргументе "response". Чтобы
+переопределить все тело JSON-ответа, нужно передать объект в аргументе "response". NestJS сериализует объект и вернет
+его в качестве тела JSON-ответа.
+
+В конструкторе "HttpException" есть третий необязательный аргумент "options" в виде объекта, который можно использовать
+для указания причины ошибки. Этот аргумент не сериализуется в объект ответа, но он может быть полезен для логирования.
+
+Пример, в котором переопределяется все тело ответа и указывается причина ошибки:
+
+@Get()
+async findAll() {
+  try {
+    await this.service.findAll()
+  } catch (error) {
+    throw new HttpException({
+      status: HttpStatus.FORBIDDEN,
+      error: 'This is a custom message',
+    }, HttpStatus.FORBIDDEN, {
+      cause: error
+    });
+  }
+}
+
+Встроенные исключения наследуются от встроенного класса "IntrinsicException" из NestJS. Этот класс помогает различать
+исключения, являющиеся частью нормальной работы приложения, и те, которые таковыми не являются.
+
+NestJS позволяет создавать свои фильтры исключений. Рекомендуется создавать собственную иерархию фильтров исключений, в
+которой созданные фильтры исключений наследуются от базового класса "HttpException" из NestJS. При таком подходе NestJS
+будет распознавать созданные фильтры исключений и автоматически обработает ответы об ошибках:
+
+export class ForbiddenException extends HttpException {
+  constructor() {
+    super('Forbidden', HttpStatus.FORBIDDEN);
+  }
+}
+
+NestJS предоставляет набор стандартных исключений, наследуемых от базового класса "HttpException" из NestJS, которые
+представляют собой многие из наиболее распространенных HTTP-исключений. Все встроенные исключения также могут
+предоставлять как причину ошибки, так и ее описание:
+
+throw new BadRequestException('Something bad happened', {
+  cause: new Error(),
+  description: 'Some error description',
+});
+
+Используя вышеуказанное, ответ будет выглядеть так:
+
+{
+  "message": "Something bad happened",
+  "error": "Some error description",
+  "statusCode": 400
+}
+
+Фильтры исключений в NestJS должны реализовывать универсальный интерфейс "ExceptionFilter<T>" из NestJS, что требует
+реализации метода "catch(exception: T, host: ArgumentsHost)". "T" обозначает тип исключения.
+
+Пример кастомного фильтра исключений:
+
+import { ExceptionFilter, Catch, ArgumentsHost, HttpException } from '@nestjs/common';
+import { Request, Response } from 'express';
+
+@Catch(HttpException)
+export class HttpExceptionFilter implements ExceptionFilter {
+  catch(exception: HttpException, host: ArgumentsHost) {
+    const ctx = host.switchToHttp();
+    const response = ctx.getResponse<Response>();
+    const request = ctx.getRequest<Request>();
+    const status = exception.getStatus();
+
+    response
+      .status(status)
+      .json({
+        statusCode: status,
+        timestamp: new Date().toISOString(),
+        path: request.url,
+      });
+  }
+}
+
+В этом примере:
+1. Декоратор "@Catch(HttpException)" связывает необходимые метаданные с фильтром исключений, сообщая NestJS, что этот
+фильтр исключений ищет исключения именно типа "HttpException" из NestJS. Декоратор "@Catch()" может принимать один
+параметр или список, разделенный запятыми.
+2. Параметр "exception" метода "catch()" указывает на объект исключения, который в данный момент обрабатывается.
+3. Параметр "host" метода "catch()" указывает на экземпляр интерфейса "ArgumentsHost" из NestJS, который используется
+для получения ссылки на объекты "Request" и "Response".
+4. Из объекта "Request" берется URL.
+5. Используется объект "Response", чтобы изменить ответ клиенту.
+
+Для привязки фильтров исключений используется декоратор "@UseFilters()" из NestJS. Пример привязки фильтра исключений
+маршрута:
+
+@Post()
+@UseFilters(new HttpExceptionFilter())
+async create(@Body() createCatDto: CreateCatDto) {
+  throw new ForbiddenException();
+}
+
+Декоратор "@UseFilters()" может принимать один фильтр исключений или список фильтров исключений, разделенных запятыми. В
+примере выше создается экземпляр класса "HttpExceptionFilter" на месте. В качестве альтернативы можно передать класс
+вместо экземпляра, переложив ответственность за создание экземпляра на NestJS и включив DI:
+
+@Post()
+@UseFilters(HttpExceptionFilter)
+async create(@Body() createCatDto: CreateCatDto) {
+  throw new ForbiddenException();
+}
+
+По возможности, предпочтительнее применять фильтры исключений, используя классы, а не экземпляры, так как это снижает
+потребление памяти, поскольку NestJS может легко повторно использовать экземпляры одного и того же класса во всем
+модуле.
+
+Пример фильтра исключений контроллера:
+
+@Controller()
+@UseFilters(new HttpExceptionFilter())
+export class CatsController {}
+
+Для настройки глобальный фильтров исключений нужно использовать метод "useGlobalFilters()" экземпляра приложения NestJS:
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+  app.useGlobalFilters(new HttpExceptionFilter());
+  await app.listen(process.env.PORT ?? 3000);
+}
+bootstrap();
+
+Глобальные фильтры исключений, зарегистрированные при помощи метода "useGlobalFilters()", не могут внедрять зависимости,
+поскольку это будет делаться вне контекста какого-либо модуля. Чтобы решить эту проблему, можно настроить фильтр
+исключений непосредственно из любого модуля, используя следующую конструкцию (в случае указания нескольких фильтров
+исключений, они будут отрабатывать в порядке от последнего к первому):
+
+import { Module } from '@nestjs/common';
+import { APP_FILTER } from '@nestjs/core';
+
+@Module({
+  providers: [
+    {
+      provide: APP_FILTER,
+      useClass: HttpExceptionFilter,
+    },
+  ],
+})
+export class AppModule {}
+
+Чтобы перехватывать все необработанные исключения, нужно оставить список параметров декоратора "@Catch()" пустым. При
+объединении фильтра исключений, перехватывающего все исключения, с фильтром исключений, привязанному к определенному
+типу, перехватывающий все исключения фильтр исключений следует объявлять первым, чтобы другой фильтр исключений мог
+корректно обрабатывать привязанный тип.
+
+Пример расширения встроенного глобального фильтра исключений:
+
+import { Catch, ArgumentsHost } from '@nestjs/common';
+import { BaseExceptionFilter } from '@nestjs/core';
+
+@Catch()
+export class AllExceptionsFilter extends BaseExceptionFilter {
+  catch(exception: unknown, host: ArgumentsHost) {
+    super.catch(exception, host);
+  }
+}
+
+В этом примере, чтобы делегировать обработку исключений базовому фильтру исключений, расширяется класс
+"BaseExceptionFilter" из NestJS и вызывается унаследованный метод "catch()". Фильтры исключений на уровне маршрута или
+контроллера, расширяющие класс "BaseExceptionFilter" из NestJS, не следует создавать при помощи оператора new. Вместо
+этого нужно позволить NestJS создавать их автоматически.
+
+Глобальные фильтры исключений могут расширять возможности базового фильтра исключений:
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+  const { httpAdapter } = app.get(HttpAdapterHost);
+  app.useGlobalFilters(new AllExceptionsFilter(httpAdapter));
+  await app.listen(process.env.PORT ?? 3000);
+}
+
+bootstrap();
+
+/*--------------------------------------------------------------------------------------------------------------------*/

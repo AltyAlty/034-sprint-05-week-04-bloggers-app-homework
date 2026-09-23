@@ -1,0 +1,106 @@
+Контроллеры в NestJS отвечают за обработку входящих HTTP-запросов, связывая их с соответствующими методами бизнес-слоя,
+которые реализуют бизнес-логику. Контроллеры принимают запросы, делегируют задачи соответствующим сервисам и возвращают
+ответы клиенту. Они определяют маршруты и методы, которые могут быть вызваны клиентами, например, через REST API.
+
+Каждый метод контроллера обычно ассоциирован с определенным HTTP-методом (GET, POST, PUT, DELETE и так далее) и
+маршрутом, который определяет, как запросы должны быть обработаны.
+
+Основные функции контроллеров:
+1. Обработка HTTP-запросов: Контроллеры принимают запросы от клиентов.
+2. Маршрутизация: Контроллеры связывают запросы с соответствующими методами, которые должны их обрабатывать.
+3. Делегирование бизнес-логики: Контроллеры сами по себе не содержат бизнес-логику, а делегируют ее сервисам.
+4. Формирование ответов: Контроллеры возвращают ответы клиентам после обработки запросов.
+
+В NestJS слой роутеров обычно не выделяется отдельно, потому что маршруты объявляются прямо в контроллере через
+декораторы.
+
+В методах контроллера можно возвращать промисы. NestJS под капотом сам делает await (или оборачивает результат в
+"Promise.resolve()") на то, что возвращает метод. NestJS дожидается момента выполнения промиса и автоматически
+отправляет полученные данные клиенту.
+
+Пример простого контроллера в NestJS:
+
+import { Controller, Get } from '@nestjs/common';
+
+@Controller('users')
+export class UsersController {
+    @Get()
+    getAll() {
+        return 'This action returns all users';
+    }
+
+    @Get('default-category')
+    getMyBooks() {
+        return 'This action returns users by default category';
+    }
+}
+
+В этом примере:
+1. "@Controller('users')" - это декоратор из NestJS, который помечает класс как контроллер и определяет базовый маршрут
+для всех методов внутри этого контроллера.
+2. "@Get()" - это декоратор из NestJS, который определяет метод как обработчик GET-запросов для маршрута "/users".
+3. "@Get('default-category')" - это декоратор из NestJS, который определяет метод как обработчик GET-запросов для
+маршрута "/users/default-category".
+4. Значение, которое возвращается из метода контроллера отправляется NestJS в качестве response body (аналог в
+Express.js - "res.send()"). Если возвращается объект, то он обычно сериализуется в JSON, а если возвращается строка, то
+она отправится как тело ответа. Можно возвращать не только обычные значения, но и, например, "Promise" или "Observable".
+
+Пример дополненного контроллера в NestJS:
+
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+  Query,
+} from '@nestjs/common';
+import { UsersQueryRepository } from '../infrastructure/users.query-repository';
+import { UserViewDto } from './view-dto/users.view-dto';
+import { UsersService } from '../application/users.service';
+import { CreateUserInputDto } from './input-dto/users.input-dto';
+
+@Controller('users')
+export class UsersController {
+  constructor(
+    private usersQueryRepository: UsersQueryRepository,
+    private usersService: UsersService,
+  ) {}
+
+  @Get(':id')
+  async getById(@Param('id') id: string): Promise<UserViewDto> {
+    return this.usersQueryRepository.getByIdOrNotFoundFail(id);
+  }
+
+  @Get()
+  async getAll(@Query() query: any): Promise<UserViewDto[]> {
+    return this.usersQueryRepository.getAll();
+  }
+
+  @Post()
+  async createUser(@Body() body: CreateUserInputDto): Promise<UserViewDto> {
+    const userId = await this.usersService.createUser(body);
+
+    return this.usersQueryRepository.getByIdOrNotFoundFail(userId);
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteUser(@Param('id') id: string): Promise<void> {
+    return this.usersService.deleteUser(id);
+  }
+}
+
+В этом примере:
+1. Декоратор "@Param()" из NestJS используется для получения значения ID из URI-параметров.
+2. Декоратор "@Query()" из NestJS используется для получения query-параметров.
+3. Декоратор "@Body()" из NestJS используется для получения данных из тела запроса.
+4. Декоратор "@HttpCode()" из NestJS используется для указания статуса кода успешного ответа клиенту (аналог в
+Express.js - "res.status()").
+5. Декоратор "@Post()" из NestJS помечает метод как обработчик Post-запроса.
+6. Декоратор "@Delete()" из NestJS помечает метод как обработчик DELETE-запроса.
+
+/*--------------------------------------------------------------------------------------------------------------------*/

@@ -1,0 +1,54 @@
+{
+  "compilerOptions": {
+    /**/
+    /*Указываем стандарт JavaScript, в который будет скомпилирован код.*/
+    "target": "ES2023",
+    /*Используем современный стандарт системы модулей для Node.js.*/
+    "module": "nodenext",
+    /*Устанавливаем алгоритм поиска импортируемых файлов.*/
+    "moduleResolution": "nodenext",
+    /*Указываем корень исходных файлов.*/
+    "rootDir": ".",
+    /*Указываем папку, куда будет попадать скомпилированный код.*/
+    "outDir": "./dist",
+    /*Указываем список библиотек, чьи типы нужно подгрузить глобально.*/
+    "types": ["jest", "node"],
+    /*Разрешаем импорты по умолчанию для библиотек без default export.*/
+    "allowSyntheticDefaultImports": true,
+    /*Указываем генерировать файлы определений типов (.d.ts).*/
+    "declaration": true,
+    /*Необходимо для работы внедрения зависимостей в NestJS.*/
+    "emitDecoratorMetadata": true,
+    /*Улучшаем совместимость между CommonJS и ES-модулями.*/
+    "esModuleInterop": true,
+    /*Включаем поддержку декораторов.*/
+    "experimentalDecorators": true,
+    /*Запрещаем импорты с разным регистром букв.*/
+    "forceConsistentCasingInFileNames": true,
+    /*Требуем, чтобы каждый файл можно было компилировать отдельно.*/
+    "isolatedModules": true,
+    /*Указываем не ругаться на отсутствие break в switch-case.*/
+    "noFallthroughCasesInSwitch": false,
+    /*Разрешаем не указывать тип там, где он не выведен.*/
+    "noImplicitAny": false,
+    /*Удаляем комментарии из итогового JavaScript кода.*/
+    "removeComments": true,
+    /*Учитываем поле exports в сторонних файлах "package.json".*/
+    "resolvePackageJsonExports": true,
+    /*Не проверяем типы внутри библиотек, то внутри папки "node_modules".*/
+    "skipLibCheck": true,
+    /*Создаем карты кода для удобной отладки, чтобы дебаггер указывал на код в файлах приложения, а не в
+    скомпилированном коде.*/
+    "sourceMap": true,
+    /*Не проверяем типы аргументов у функций "bind()", "call()" и "apply()".*/
+    "strictBindCallApply": false,
+    /*Запрещаем неявное использование null и undefined.*/
+    "strictNullChecks": true,
+    /*Отключаем требование TypeScript инициализировать все свойства класса в конструкторе, необходимо для NestJS.*/
+    "strictPropertyInitialization": false
+  },
+  /*Указываем какие папки компилятор должен проверять.*/
+  "include": ["src/**/*", "__tests__/**/*"],
+  /*Указываем какие папки компилятор должен игнорировать.*/
+  "exclude": ["dist", "node_modules"]
+}

@@ -41,18 +41,13 @@ export class AuthPostgresqlRepository {
   }
 
   /*Метод для создания пользовательской сессии в БД.*/
-  public async createSession(dto: {
-    userId: string;
-    deviceId: string;
-    deviceName: string;
-    ip: string;
-    iat: Date;
-    exp: Date;
-  }): Promise<void> {
-    await this.dataSource.query(
-      `INSERT INTO sessions (user_id, device_id, device_name, ip, iat, exp) VALUES ($1, $2, $3, $4, $5, $6)`,
-      [dto.userId, dto.deviceId, dto.deviceName, dto.ip, dto.iat, dto.exp]
-    );
+  public async createSession(dto: { userId: string; deviceId: string; iat: Date; exp: Date }): Promise<void> {
+    await this.dataSource.query(`INSERT INTO sessions (user_id, device_id, iat, exp) VALUES ($1, $2, $3, $4)`, [
+      dto.userId,
+      dto.deviceId,
+      dto.iat,
+      dto.exp,
+    ]);
   }
 
   /*Метод для поиска данных о подтверждении регистрации пользователя по ID пользователя в БД.*/
@@ -143,11 +138,11 @@ export class AuthPostgresqlRepository {
     userId: string,
     deviceId: string,
     iat: Date,
-    dto: { deviceName: string; ip: string; iat: Date; exp: Date }
+    dto: { iat: Date; exp: Date }
   ): Promise<void> {
     await this.dataSource.query(
-      `UPDATE sessions SET device_name = $1, ip = $2, iat = $3, exp = $4 WHERE user_id = $5 AND device_id = $6 AND iat = $7`,
-      [dto.deviceName, dto.ip, dto.iat, dto.exp, userId, deviceId, iat]
+      `UPDATE sessions SET iat = $1, exp = $2 WHERE user_id = $3 AND device_id = $4 AND iat = $5`,
+      [dto.iat, dto.exp, userId, deviceId, iat]
     );
   }
 

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsMongoId, IsNotEmpty, IsOptional, IsString, Length } from 'class-validator';
+import { IsNotEmpty, IsString, Length } from 'class-validator';
 import { Trim } from '../../../../../core/decorators/transformation/trim.transformation-decorator';
 import { POST_VALIDATION_CONSTRAINTS } from '../../../../../core/validation/constraints/post.validation-constraints';
 
@@ -35,12 +35,4 @@ export class UpdatePostByBlogIdAndPostIdInputDTO {
   @IsString({ message: 'Field "$property" must be a string' })
   @Trim()
   public content: string;
-
-  @ApiProperty({ example: '60d5ec386f6e5a1b3c9d4e2a', description: 'ID of the blog that contains the post' })
-  /*Для MongoDB.*/
-  // @IsMongoId({ message: 'Field "$property" must be an ObjectId' })
-  @IsOptional()
-  @IsString({ message: 'Field "$property" must be a string' })
-  @Trim()
-  public blogId: string;
 }

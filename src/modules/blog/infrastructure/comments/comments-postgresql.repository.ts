@@ -18,12 +18,24 @@ export class CommentsPostgresqlRepository {
     postId: string;
     blogId: string;
     userId: string;
-    userLogin: string;
     content: string;
   }): Promise<CommentPostgresqlDb> {
     const result: CommentListPostgresqlDb = await this.dataSource.query(
-      `INSERT INTO comments (post_id, blog_id, user_id, user_login, content) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [dto.postId, dto.blogId, dto.userId, dto.userLogin, dto.content]
+      `
+      INSERT INTO comments (post_id, blog_id, user_id, content)
+        VALUES ($1, $2, $3, $4)
+        RETURNING 
+          id, 
+          post_id, 
+          blog_id, 
+          user_id,
+          (SELECT login FROM users WHERE id = $3) AS user_login,
+          content,
+          likes_count,
+          dislikes_count,
+          created_at,
+          deleted_at`,
+      [dto.postId, dto.blogId, dto.userId, dto.content]
     );
 
     return result[0];
@@ -46,7 +58,21 @@ export class CommentsPostgresqlRepository {
   /*Метод для поиска комментария по ID в БД.*/
   public async findById(id: string): Promise<CommentPostgresqlDb | null> {
     const result: CommentListPostgresqlDb = await this.dataSource.query(
-      `SELECT * FROM comments WHERE id = $1 AND deleted_at IS NULL`,
+      `
+      SELECT
+        c.id,
+        c.post_id,
+        c.blog_id,
+        c.user_id,
+        u.login AS user_login,
+        c.content,
+        c.likes_count,
+        c.dislikes_count,
+        c.created_at,
+        c.deleted_at
+        FROM comments c
+      JOIN users u ON u.id = c.user_id
+        WHERE c.id = $1 AND c.deleted_at IS NULL`,
       [id]
     );
 

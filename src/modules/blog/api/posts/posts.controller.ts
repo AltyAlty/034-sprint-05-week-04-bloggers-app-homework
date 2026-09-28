@@ -46,17 +46,7 @@ export class PostsController {
     private readonly commentsQueryService: CommentsPostgresqlQueryService
   ) {}
 
-  /*001. POST-запрос по созданию поста.*/
-  @PostsControllerSwaggerDecorators.createPost
-  @UseGuards(BasicAuthGuard)
-  @Post(SETTINGS.POSTS_CREATE_POST_PATH)
-  @HttpCode(HttpStatus.CREATED)
-  public async createPost(@Body() body: CreatePostInputDTO): Promise<PostOutputDTO> {
-    /*Просим сервис "PostsService" создать пост.*/
-    return this.postsService.create(body);
-  }
-
-  /*002. POST-запрос по созданию комментария в посте.*/
+  /*001. POST-запрос по созданию комментария в посте.*/
   @PostsControllerSwaggerDecorators.createCommentForPost
   @UseGuards(AccessJwtAuthGuard)
   @Post(SETTINGS.POSTS_CREATE_COMMENT_FOR_POST_PATH)
@@ -70,7 +60,7 @@ export class PostsController {
     return this.commentsService.createForPost(id, body, userJwtAccessAuthContext);
   }
 
-  /*003. GET-запрос по поиску поста по ID, используя URI-параметры.*/
+  /*002. GET-запрос по поиску поста по ID, используя URI-параметры.*/
   @PostsControllerSwaggerDecorators.getPostById
   @UseGuards(OptionalAccessJwtAuthGuard)
   @Get(SETTINGS.POSTS_GET_POST_BY_ID_PATH)
@@ -83,7 +73,7 @@ export class PostsController {
     return this.postsQueryService.findById(id, userAccessJwtAuthContext?.id);
   }
 
-  /*004. GET-запрос по поиску постов с пагинацией, используя query-параметры.*/
+  /*003. GET-запрос по поиску постов с пагинацией, используя query-параметры.*/
   @PostsControllerSwaggerDecorators.getPostList
   @UseGuards(OptionalAccessJwtAuthGuard)
   @Get(SETTINGS.POSTS_GET_POST_LIST_PATH)
@@ -96,7 +86,7 @@ export class PostsController {
     return this.postsQueryService.findAll(query, undefined, userAccessJwtAuthContext?.id);
   }
 
-  /*005. GET-запрос по поиску комментариев с пагинацией по ID поста, используя query-параметры.*/
+  /*004. GET-запрос по поиску комментариев с пагинацией по ID поста, используя query-параметры.*/
   @PostsControllerSwaggerDecorators.getCommentListByPostId
   @UseGuards(OptionalAccessJwtAuthGuard)
   @Get(SETTINGS.POSTS_GET_COMMENT_LIST_BY_POST_ID_PATH)
@@ -110,17 +100,7 @@ export class PostsController {
     return this.commentsQueryService.findAllByPostId(id, query, userAccessJwtAuthContext?.id);
   }
 
-  /*006. PUT-запрос по изменению поста по ID, используя URI-параметры.*/
-  @PostsControllerSwaggerDecorators.updatePostById
-  @UseGuards(BasicAuthGuard)
-  @Put(SETTINGS.POSTS_UPDATE_POST_BY_ID_PATH)
-  @HttpCode(HttpStatus.NO_CONTENT)
-  public async updatePostById(@Param('id') id: string, @Body() body: UpdatePostByIdInputDTO): Promise<void> {
-    /*Просим сервис "PostsService" изменить пост по ID.*/
-    await this.postsService.updateById(id, body);
-  }
-
-  /*007. PUT-запрос по изменению статуса лайка поста по ID поста, используя URI-параметры.*/
+  /*005. PUT-запрос по изменению статуса лайка поста по ID поста, используя URI-параметры.*/
   @PostsControllerSwaggerDecorators.updatePostLikeStatusById
   @UseGuards(AccessJwtAuthGuard)
   @Put(SETTINGS.POSTS_LIKE_POST_BY_ID_PATH)
@@ -134,7 +114,27 @@ export class PostsController {
     await this.postsService.updatePostLikeStatusById(id, body, userAccessJwtAuthContext);
   }
 
-  /*008. DELETE-запрос по удалению поста по ID, используя URI-параметры.*/
+  /*-006. POST-запрос по созданию поста.*/
+  @PostsControllerSwaggerDecorators.createPost
+  @UseGuards(BasicAuthGuard)
+  @Post(SETTINGS.POSTS_CREATE_POST_PATH)
+  @HttpCode(HttpStatus.CREATED)
+  public async createPost(@Body() body: CreatePostInputDTO): Promise<PostOutputDTO> {
+    /*Просим сервис "PostsService" создать пост.*/
+    return this.postsService.create(body);
+  }
+
+  /*-007. PUT-запрос по изменению поста по ID, используя URI-параметры.*/
+  @PostsControllerSwaggerDecorators.updatePostById
+  @UseGuards(BasicAuthGuard)
+  @Put(SETTINGS.POSTS_UPDATE_POST_BY_ID_PATH)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  public async updatePostById(@Param('id') id: string, @Body() body: UpdatePostByIdInputDTO): Promise<void> {
+    /*Просим сервис "PostsService" изменить пост по ID.*/
+    await this.postsService.updateById(id, body);
+  }
+
+  /*-008. DELETE-запрос по удалению поста по ID, используя URI-параметры.*/
   @PostsControllerSwaggerDecorators.deletePostById
   @UseGuards(BasicAuthGuard)
   @Delete(SETTINGS.POSTS_DELETE_POST_BY_ID_PATH)

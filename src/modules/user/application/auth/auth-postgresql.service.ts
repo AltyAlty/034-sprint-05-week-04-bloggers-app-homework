@@ -322,8 +322,6 @@ export class AuthPostgresqlService {
     await this.authRepository.createSession({
       userId,
       deviceId,
-      deviceName: userAgent,
-      ip,
       iat: refreshTokenIatDate,
       exp: refreshTokenExpDate,
     });
@@ -375,8 +373,6 @@ export class AuthPostgresqlService {
     /*Просим репозиторий "AuthRepository" изменить пользовательскую сессию по ID пользователя, ID пользовательского
     устройства и дате выдачи RT в БД.*/
     await this.authRepository.updateSessionByUserIdAndDeviceIdAndIat(userId, deviceId, userRefreshJwtAuthContext.iat, {
-      deviceName: userAgent,
-      ip,
       iat: refreshTokenIatDate,
       exp: refreshTokenExpDate,
     });

@@ -28,15 +28,15 @@ export class UsersPostgresqlQueryRepository {
     /*Подготавливаем параметры поиска. Если они переданы, то оборачиваем их в символ "%" и экранируем.*/
     const loginParam: string | null = dto.searchLoginTerm ? `%${this._escapeLike(dto.searchLoginTerm)}%` : null;
     const emailParam: string | null = dto.searchEmailTerm ? `%${this._escapeLike(dto.searchEmailTerm)}%` : null;
-    /*Создаем список допустимых полей для сортировки в целях защиты от SQL-инъекций, так как имена полей в оператор
+    /*Создаем список допустимых полей для сортировки в целях защиты от SQL-инъекций, так как имена полей в клаузу
     "ORDER BY" нельзя передавать параметрами через $1, поскольку СУБД считает параметры строго значениями данных.*/
     const allowedSortFields: Record<string, string> = { login: 'login', email: 'email', createdAt: 'created_at' };
     /*Если пришедшее значение "dto.sortBy" нет в ключах словаря, то выбирается безопасный вариант "created_at".*/
     const sortField: string = allowedSortFields[dto.sortBy] ?? 'created_at';
     /*Маппим направления сортировки в ключевые слова PostgreSQL.*/
     const sortDirection: string = dto.sortDirection === SortDirectionInputDTO.Asc ? 'ASC' : 'DESC';
-    /*Формируем параметр для "COLLATE", чтобы для текстовых полей использовалась ASCII-сортировку, а для дат -
-    стандартная.*/
+    /*Формируем параметр для модификатора "COLLATE", чтобы для текстовых полей использовалась ASCII-сортировку, а для
+    дат - стандартная.*/
     const collation: string = sortField === 'created_at' ? '' : 'COLLATE "C"';
 
     /*Параллельно выполняем запрос данных и подсчет общего количества элементов.*/
@@ -86,7 +86,7 @@ export class UsersPostgresqlQueryRepository {
       ),
     ])) as [UserListPostgresqlDb, { total: string }[]];
 
-    /*Оператор "COUNT(*)" возвращает строку, поэтому приводим к числу.*/
+    /*Агрегатная функция "COUNT(*)" возвращает строку, поэтому приводим к числу.*/
     const totalCount: number = parseInt(countResult[0].total, 10);
     /*Возвращаем данные по пользователям.*/
     return { items, totalCount };

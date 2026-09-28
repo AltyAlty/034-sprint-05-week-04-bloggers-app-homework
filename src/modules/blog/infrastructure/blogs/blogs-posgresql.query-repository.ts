@@ -28,7 +28,7 @@ export class BlogsPostgresqlQueryRepository {
     /*Подготавливаем параметры поиска. Если они переданы, то оборачиваем их в символ "%" и экранируем.*/
     const nameParam: string | null = dto.searchNameTerm ? `%${this._escapeLike(dto.searchNameTerm)}%` : null;
 
-    /*Создаем список допустимых полей для сортировки в целях защиты от SQL-инъекций, так как имена полей в оператор
+    /*Создаем список допустимых полей для сортировки в целях защиты от SQL-инъекций, так как имена полей в клаузу
     "ORDER BY" нельзя передавать параметрами через $1, поскольку СУБД считает параметры строго значениями данных.*/
     const allowedSortFields: Record<string, string> = {
       name: 'name',
@@ -41,8 +41,8 @@ export class BlogsPostgresqlQueryRepository {
     const sortField: string = allowedSortFields[dto.sortBy] ?? 'created_at';
     /*Маппим направления сортировки в ключевые слова PostgreSQL.*/
     const sortDirection: string = dto.sortDirection === SortDirectionInputDTO.Asc ? 'ASC' : 'DESC';
-    /*Формируем параметр для "COLLATE", чтобы для текстовых полей использовалась ASCII-сортировку, а для дат -
-    стандартная.*/
+    /*Формируем параметр для модификатора "COLLATE", чтобы для текстовых полей использовалась ASCII-сортировку, а для
+    дат - стандартная.*/
     const collation: string = sortField === 'created_at' ? '' : 'COLLATE "C"';
 
     /*Параллельно выполняем запрос данных и подсчет общего количества элементов.*/
@@ -76,7 +76,7 @@ export class BlogsPostgresqlQueryRepository {
       ),
     ])) as [BlogListPostgresqlDb, { total: string }[]];
 
-    /*Оператор "COUNT(*)" возвращает строку, поэтому приводим к числу.*/
+    /*Агрегатная функция "COUNT(*)" возвращает строку, поэтому приводим к числу.*/
     const totalCount: number = parseInt(countResult[0].total, 10);
     /*Возвращаем данные по блогам.*/
     return { items, totalCount };

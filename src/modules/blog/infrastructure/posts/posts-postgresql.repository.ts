@@ -16,14 +16,27 @@ export class PostsPostgresqlRepository {
   /*Метод для создания поста в БД.*/
   public async create(dto: {
     blogId: string;
-    blogName: string;
     title: string;
     shortDescription: string;
     content: string;
   }): Promise<PostPostgresqlDb> {
     const result: PostListPostgresqlDb = await this.dataSource.query(
-      `INSERT INTO posts (blog_id, blog_name, title, short_description, content) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [dto.blogId, dto.blogName, dto.title, dto.shortDescription, dto.content]
+      `
+      INSERT INTO posts (blog_id, title, short_description, content)
+        VALUES ($1, $2, $3, $4)
+      RETURNING 
+        id, 
+        blog_id, 
+        (SELECT name FROM blogs WHERE id = $1) AS blog_name,
+        title,
+        short_description,
+        content,
+        likes_count,
+        dislikes_count,
+        created_at,
+        deleted_at
+      `,
+      [dto.blogId, dto.title, dto.shortDescription, dto.content]
     );
 
     return result[0];
@@ -34,19 +47,33 @@ export class PostsPostgresqlRepository {
     postId: string;
     blogId: string;
     userId: string;
-    login: string;
     likeStatus: PostLikeStatusDomainDTO;
   }): Promise<void> {
     await this.dataSource.query(
-      `INSERT INTO post_likes_data (post_id, blog_id, user_id, login, like_status) VALUES ($1, $2, $3, $4, $5)`,
-      [dto.postId, dto.blogId, dto.userId, dto.login, dto.likeStatus]
+      `INSERT INTO post_likes_data (post_id, blog_id, user_id, like_status) VALUES ($1, $2, $3, $4)`,
+      [dto.postId, dto.blogId, dto.userId, dto.likeStatus]
     );
   }
 
   /*Метод для поиска поста по ID в БД.*/
   public async findById(id: string): Promise<PostPostgresqlDb | null> {
     const result: PostListPostgresqlDb = await this.dataSource.query(
-      `SELECT * FROM posts WHERE id = $1 AND deleted_at IS NULL`,
+      `
+      SELECT
+        p.id,
+        p.blog_id,
+        b.name AS blog_name,
+        p.title,
+        p.short_description,
+        p.content,
+        p.likes_count,
+        p.dislikes_count,
+        p.created_at,
+        p.deleted_at
+        FROM posts p
+      JOIN blogs b ON p.blog_id = b.id
+        WHERE p.id = $1 AND p.deleted_at IS NULL
+      `,
       [id]
     );
 
@@ -69,12 +96,14 @@ export class PostsPostgresqlRepository {
   /*Метод для изменения поста по ID в БД.*/
   public async updateById(
     id: string,
-    dto: { blogId: string; title: string; shortDescription: string; content: string }
+    dto: { title: string; shortDescription: string; content: string }
   ): Promise<void> {
-    await this.dataSource.query(
-      `UPDATE posts SET blog_id = $1, title = $2, short_description = $3, content = $4 WHERE id = $5`,
-      [dto.blogId, dto.title, dto.shortDescription, dto.content, id]
-    );
+    await this.dataSource.query(`UPDATE posts SET title = $1, short_description = $2, content = $3 WHERE id = $4`, [
+      dto.title,
+      dto.shortDescription,
+      dto.content,
+      id,
+    ]);
   }
 
   /*Метод для изменения количества лайков и дизлайков у поста по ID в БД.*/

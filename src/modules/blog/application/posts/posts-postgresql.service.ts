@@ -39,7 +39,7 @@ export class PostsPostgresqlService {
       });
 
     /*Если блог был найден, то просим репозиторий "PostsRepository" создать пост в БД.*/
-    const post: PostPostgresqlDb | null = await this.postsRepository.create({ ...dto, blogName: blog.name });
+    const post: PostPostgresqlDb | null = await this.postsRepository.create({ ...dto });
     /*Преобразовываем пост из БД в подготовленный для отправки клиенту пост и возвращаем его.*/
     return PostOutputDTO.mapFromPostPostgresqlDbToPostOutputDTO(post, PostLikeStatusOutputDTO.None, []);
   }
@@ -58,7 +58,7 @@ export class PostsPostgresqlService {
       });
 
     /*Если блог был найден, то просим репозиторий "PostsRepository" создать пост в БД.*/
-    const post: PostPostgresqlDb | null = await this.postsRepository.create({ ...dto, blogId, blogName: blog.name });
+    const post: PostPostgresqlDb | null = await this.postsRepository.create({ ...dto, blogId });
     /*Преобразовываем пост из БД в подготовленный для отправки клиенту пост и возвращаем его.*/
     return PostOutputDTO.mapFromPostPostgresqlDbToPostOutputDTO(post, PostLikeStatusOutputDTO.None, []);
   }
@@ -117,8 +117,6 @@ export class PostsPostgresqlService {
     const blogId: string = post.blog_id;
     /*Получаем ID пользователя.*/
     const userId: string = userAccessJwtAuthContext.id;
-    /*Получаем логин пользователя.*/
-    const login: string = userAccessJwtAuthContext.login;
     /*Получаем статус лайка поста.*/
     const likeStatus: PostLikeStatusInputDTO = dto.likeStatus;
 
@@ -161,7 +159,6 @@ export class PostsPostgresqlService {
           postId: id,
           blogId,
           userId,
-          login,
           likeStatus: likeStatus as unknown as PostLikeStatusDomainDTO,
         });
 
@@ -194,7 +191,6 @@ export class PostsPostgresqlService {
           postId: id,
           blogId,
           userId,
-          login,
           likeStatus: likeStatus as unknown as PostLikeStatusDomainDTO,
         });
 

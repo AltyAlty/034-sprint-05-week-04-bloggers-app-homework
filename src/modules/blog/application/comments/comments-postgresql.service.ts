@@ -44,7 +44,6 @@ export class CommentsPostgresqlService {
       postId,
       blogId: post.blog_id,
       userId: userAccessJwtAuthContext.id,
-      userLogin: userAccessJwtAuthContext.login,
     });
 
     /*Преобразовываем комментарий из БД в подготовленный для отправки клиенту комментарий и возвращаем его.*/

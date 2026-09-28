@@ -20,7 +20,22 @@ export class PostsPostgresqlQueryRepository {
   /*Метод для поиска поста по ID в БД.*/
   public async findById(id: string): Promise<PostPostgresqlDb | null> {
     const result: PostListPostgresqlDb = await this.dataSource.query(
-      `SELECT * FROM posts WHERE id = $1 AND deleted_at IS NULL`,
+      `
+      SELECT
+        p.id,
+        p.blog_id,
+        b.name AS blog_name,
+        p.title,
+        p.short_description,
+        p.content,
+        p.likes_count,
+        p.dislikes_count,
+        p.created_at,
+        p.deleted_at
+        FROM posts p
+      JOIN blogs b ON p.blog_id = b.id
+        WHERE p.id = $1 AND p.deleted_at IS NULL
+      `,
       [id]
     );
 
@@ -36,34 +51,48 @@ export class PostsPostgresqlQueryRepository {
     "pageNumber".*/
     const skip: number = dto.calculateSkip();
 
-    /*Создаем список допустимых полей для сортировки в целях защиты от SQL-инъекций, так как имена полей в оператор
+    /*Создаем список допустимых полей для сортировки в целях защиты от SQL-инъекций, так как имена полей в клаузу
     "ORDER BY" нельзя передавать параметрами через $1, поскольку СУБД считает параметры строго значениями данных.*/
     const allowedSortFields: Record<string, string> = {
-      title: 'title',
-      shortDescription: 'short_description',
-      content: 'content',
-      blogId: 'blog_id',
-      blogName: 'blog_name',
-      createdAt: 'created_at',
+      title: 'p.title',
+      shortDescription: 'p.short_description',
+      content: 'p.content',
+      blogId: 'p.blog_id',
+      blogName: 'b.name',
+      createdAt: 'p.created_at',
     };
 
+    /*Создаем список полей, к которым разрешено применять модификатор "COLLATE", то есть только поля со строковыми
+    типами данных.*/
+    const collatableSortFields: Set<string> = new Set(['p.title', 'p.short_description', 'p.content', 'b.name']);
     /*Если пришедшее значение "dto.sortBy" нет в ключах словаря, то выбирается безопасный вариант "created_at".*/
-    const sortField: string = allowedSortFields[dto.sortBy] ?? 'created_at';
+    const sortField: string = allowedSortFields[dto.sortBy] ?? 'p.created_at';
     /*Маппим направления сортировки в ключевые слова PostgreSQL.*/
     const sortDirection: string = dto.sortDirection === SortDirectionInputDTO.Asc ? 'ASC' : 'DESC';
-    /*Формируем параметр для "COLLATE", чтобы для текстовых полей использовалась ASCII-сортировку, а для дат -
-    стандартная.*/
-    const collation: string = sortField === 'created_at' ? '' : 'COLLATE "C"';
+    /*Формируем параметр для модификатора "COLLATE", чтобы для текстовых полей использовалась ASCII-сортировку, а для
+    дат - стандартная.*/
+    const collation: string = collatableSortFields.has(sortField) ? 'COLLATE "C"' : '';
 
     /*Параллельно выполняем запрос данных и подсчет общего количества элементов.*/
     const [items, countResult] = (await Promise.all([
       this.dataSource.query(
         `
-        SELECT *
-            FROM posts
-            WHERE deleted_at IS NULL AND ($1::text IS NULL OR blog_id = $1::uuid)
-            ORDER BY ${sortField} ${collation} ${sortDirection}
-            LIMIT $2 OFFSET $3
+        SELECT
+          p.id,
+          p.blog_id,
+          b.name AS blog_name,
+          p.title,
+          p.short_description,
+          p.content,
+          p.likes_count,
+          p.dislikes_count,
+          p.created_at,
+          p.deleted_at
+          FROM posts p
+        JOIN blogs b ON b.id = p.blog_id
+          WHERE p.deleted_at IS NULL AND ($1::text IS NULL OR p.blog_id = $1::uuid)
+        ORDER BY ${sortField} ${collation} ${sortDirection}, p.id ASC
+        LIMIT $2 OFFSET $3
         `,
         [blogId ?? null, dto.pageSize, skip]
       ),
@@ -71,14 +100,14 @@ export class PostsPostgresqlQueryRepository {
       this.dataSource.query(
         `
         SELECT COUNT(*) AS total
-            FROM posts
-            WHERE deleted_at IS NULL AND ($1::text IS NULL OR blog_id = $1::uuid)
+            FROM posts p
+            WHERE p.deleted_at IS NULL AND ($1::text IS NULL OR p.blog_id = $1::uuid)
         `,
         [blogId ?? null]
       ),
     ])) as [PostListPostgresqlDb, { total: string }[]];
 
-    /*Оператор "COUNT(*)" возвращает строку, поэтому приводим к числу.*/
+    /*Агрегатная функция "COUNT(*)" возвращает строку, поэтому приводим к числу.*/
     const totalCount: number = parseInt(countResult[0].total, 10);
     /*Возвращаем данные по постам.*/
     return { items, totalCount };
@@ -112,11 +141,12 @@ export class PostsPostgresqlQueryRepository {
   public async findLastThreePostLikes(postId: string): Promise<NewestPostLikeListOutputDTO> {
     const result: PostLikeDataListPostgresqlDb = await this.dataSource.query(
       `
-    SELECT user_id, login, added_at
-        FROM post_likes_data
-        WHERE post_id = $1 AND like_status = $2
-        ORDER BY added_at DESC
-        LIMIT 3
+      SELECT pld.user_id, u.login, pld.added_at
+        FROM post_likes_data pld
+      JOIN users u ON u.id = pld.user_id
+        WHERE pld.post_id = $1 AND pld.like_status = $2
+      ORDER BY pld.added_at DESC
+      LIMIT 3
     `,
       [postId, PostLikeStatusDomainDTO.Like]
     );
@@ -141,10 +171,12 @@ export class PostsPostgresqlQueryRepository {
       `
       SELECT post_id, user_id, login, added_at
         FROM (
-            SELECT post_id, user_id, login, added_at, ROW_NUMBER() OVER (PARTITION BY post_id ORDER BY added_at DESC) AS rn
-                FROM post_likes_data
-                WHERE post_id = ANY($1) AND like_status = $2
-    ) subquery
+          SELECT pld.post_id, pld.user_id, u.login, pld.added_at,
+            ROW_NUMBER() OVER (PARTITION BY pld.post_id ORDER BY pld.added_at DESC) AS rn
+            FROM post_likes_data pld
+          JOIN users u ON u.id = pld.user_id
+            WHERE pld.post_id = ANY($1) AND pld.like_status = $2
+        ) subquery
         WHERE rn <= 3
     `,
       [postIds, PostLikeStatusDomainDTO.Like]

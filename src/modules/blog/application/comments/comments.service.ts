@@ -122,8 +122,8 @@ export class CommentsService {
 
     /*Если пользователь хочет убрать лайк/дизлайк.*/
     if (likeStatus === CommentLikeStatusInputDTO.None) {
-      /*Просим репозиторий "CommentsRepository" удалить данные о лайке комментария по ID комментария и ID пользователя в
-      БД.*/
+      /*Просим репозиторий "CommentsRepository" hard удалить данные о лайке комментария по ID комментария и ID
+      пользователя в БД.*/
       await this.commentsRepository.deleteCommentLikeDataByCommentIdAndUserId(id, userId);
 
       /*Просим репозиторий "CommentsRepository" изменить количество лайков и дизлайков у комментария в БД:
@@ -204,7 +204,7 @@ export class CommentsService {
   }
 
   /*Метод для soft удаления комментария по ID.*/
-  public async markAsDeletedById(id: string): Promise<void> {
+  public async markAsDeletedById(id: string, userAccessJwtAuthContext: UserAccessJwtAuthContextDTO): Promise<void> {
     /*Просим репозиторий "CommentsRepository" найти комментарий по ID в БД.*/
     const comment: CommentDb | null = await this.commentsRepository.findById(id);
 
@@ -216,7 +216,18 @@ export class CommentsService {
         field: 'id',
       });
 
-    /*Если комментарий был найден, то просим репозиторий "CommentsRepository" пометить его как удаленный в БД.*/
+    /*Если пользователь не является владельцем комментария, то выбрасываем исключение с информацией об этом.*/
+    if (comment.user_id !== userAccessJwtAuthContext.id)
+      throw new DomainException({
+        code: DomainExceptionCode.WrongCommentOwnerWhileDeleting,
+        message: 'The user is not the owner of the comment to delete',
+        field: 'id',
+      });
+
+    /*Если комментарий был найден и пользователь является его владельцем, то просим репозиторий "CommentsRepository"
+    soft удалить данные о лайках комментария по ID комментария в БД.*/
+    await this.commentsRepository.markAllCommentLikeDataAsDeletedByCommentId(id);
+    /*Просим репозиторий "CommentsRepository" soft удалить комментарий по ID в БД.*/
     await this.commentsRepository.markAsDeletedById(id);
   }
 
@@ -242,25 +253,41 @@ export class CommentsService {
       });
 
     /*Если комментарий был найден и пользователь является его владельцем, то просим репозиторий "CommentsRepository"
-    удалить данные о лайках комментария по ID комментария в БД.*/
+    hard удалить данные о лайках комментария по ID комментария в БД.*/
     await this.commentsRepository.deleteAllCommentLikeDataByCommentId(id);
-    /*Просим репозиторий "CommentsRepository" удалить комментарий по ID в БД.*/
+    /*Просим репозиторий "CommentsRepository" hard удалить комментарий по ID в БД.*/
     await this.commentsRepository.deleteById(id);
+  }
+
+  /*Метод для soft удаления комментариев по ID поста.*/
+  public async markAllAsDeletedByPostId(id: string): Promise<void> {
+    /*Просим репозиторий "CommentsRepository" soft удалить данные о лайках комментария по ID поста в БД.*/
+    await this.commentsRepository.markAllCommentLikeDataAsDeletedByPostId(id);
+    /*Просим репозиторий "CommentsRepository" soft удалить комментарии по ID поста в БД.*/
+    await this.commentsRepository.markAllAsDeletedByPostId(id);
   }
 
   /*Метод для hard удаления комментариев по ID поста.*/
   public async deleteAllByPostId(id: string): Promise<void> {
-    /*Просим репозиторий "CommentsRepository" удалить данные о лайках комментария по ID поста в БД.*/
+    /*Просим репозиторий "CommentsRepository" hard удалить данные о лайках комментария по ID поста в БД.*/
     await this.commentsRepository.deleteAllCommentLikeDataByPostId(id);
-    /*Просим репозиторий "CommentsRepository" удалить комментарии по ID поста в БД.*/
+    /*Просим репозиторий "CommentsRepository" hard удалить комментарии по ID поста в БД.*/
     await this.commentsRepository.deleteAllByPostId(id);
+  }
+
+  /*Метод для soft удаления комментариев по ID блога.*/
+  public async markAllAsDeletedByBlogId(id: string): Promise<void> {
+    /*Просим репозиторий "CommentsRepository" soft удалить данные о лайках комментария по ID блога в БД.*/
+    await this.commentsRepository.markAllCommentLikeDataAsDeletedByBlogId(id);
+    /*Просим репозиторий "CommentsRepository" soft удалить комментарии по ID блога в БД.*/
+    await this.commentsRepository.markAllAsDeletedByBlogId(id);
   }
 
   /*Метод для hard удаления комментариев по ID блога.*/
   public async deleteAllByBlogId(id: string): Promise<void> {
-    /*Просим репозиторий "CommentsRepository" удалить данные о лайках комментария по ID блога в БД.*/
+    /*Просим репозиторий "CommentsRepository" hard удалить данные о лайках комментария по ID блога в БД.*/
     await this.commentsRepository.deleteAllCommentLikeDataByBlogId(id);
-    /*Просим репозиторий "CommentsRepository" удалить комментарии по ID блога в БД.*/
+    /*Просим репозиторий "CommentsRepository" hard удалить комментарии по ID блога в БД.*/
     await this.commentsRepository.deleteAllByBlogId(id);
   }
 }

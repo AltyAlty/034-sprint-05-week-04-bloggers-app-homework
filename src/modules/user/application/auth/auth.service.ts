@@ -178,8 +178,8 @@ export class AuthService {
     /*Если пользователь был найден и его регистрация еще не была подтверждена, то просим репозиторий "UsersRepository"
     подтвердить регистрацию пользователя по ID пользователя в БД.*/
     await this.usersRepository.confirmUserById(userId);
-    /*Просим репозиторий "AuthRepository" удалить все данные о подтверждении регистрации пользователя по ID пользователя
-    в БД.*/
+    /*Просим репозиторий "AuthRepository" hard удалить все данные о подтверждении регистрации пользователя по ID
+    пользователя  в БД.*/
     await this.authRepository.deleteAllEmailConfirmationsByUserId(userId);
   }
 
@@ -265,8 +265,8 @@ export class AuthService {
     const passwordHash: string = await this.argon2Adapter.generatePasswordHash(dto.password);
     /*Просим репозиторий "UsersRepository" изменить хеш для пароля пользователя по ID пользователя в БД.*/
     await this.usersRepository.updateUserPasswordHashById(userId, passwordHash);
-    /*Просим репозиторий "AuthRepository" удалить данные о всех кодах восстановления пароля пользователя ID пользователя
-    в БД.*/
+    /*Просим репозиторий "AuthRepository" hard удалить данные о всех кодах восстановления пароля пользователя ID
+    пользователя в БД.*/
     await this.authRepository.deleteAllRecoveryCodesDataByUserId(userId);
   }
 
@@ -393,7 +393,7 @@ export class AuthService {
   public async revokeSession(userRefreshJwtAuthContext: UserRefreshJwtAuthContextDTO): Promise<void> {
     /*Получаем ID пользовательского устройства.*/
     const deviceId: string = userRefreshJwtAuthContext.deviceId;
-    /*Просим репозиторий "AuthRepository" удалить пользовательскую сессию по ID пользователя, ID пользовательского
+    /*Просим репозиторий "AuthRepository" hard удалить пользовательскую сессию по ID пользователя, ID пользовательского
     устройства и дате выдачи RT в БД.*/
     await this.authRepository.deleteSessionByUserIdAndDeviceIdAndIat(
       userRefreshJwtAuthContext.id,
@@ -401,7 +401,7 @@ export class AuthService {
       userRefreshJwtAuthContext.iat
     );
 
-    /*Просим репозиторий "SecurityDevicesRepository" удалить пользовательское устройство по ID в БД.*/
+    /*Просим репозиторий "SecurityDevicesRepository" hard удалить пользовательское устройство по ID в БД.*/
     await this.securityDevicesRepository.deleteById(deviceId);
   }
 
@@ -432,8 +432,8 @@ export class AuthService {
         field: 'id',
       });
 
-    /*Если пользователь является владельцем пользовательского устройства, то просим репозиторий "AuthRepository" удалить
-    пользовательскую сессию по ID пользователя, ID пользовательского устройства и дате выдачи RT в БД.*/
+    /*Если пользователь является владельцем пользовательского устройства, то просим репозиторий "AuthRepository" hard
+    удалить пользовательскую сессию по ID пользователя, ID пользовательского устройства и дате выдачи RT в БД.*/
     await this.authRepository.deleteSessionByUserIdAndDeviceIdAndIat(userId, deviceId, userRefreshJwtAuthContext.iat);
     /*Просим репозиторий "SecurityDevicesRepository" удалить пользовательское устройство по ID в БД.*/
     await this.securityDevicesRepository.deleteById(deviceId);
@@ -447,10 +447,10 @@ export class AuthService {
     const userId: string = userRefreshJwtAuthContext.id;
     /*Получаем ID пользовательского устройства.*/
     const deviceId: string = userRefreshJwtAuthContext.deviceId;
-    /*Просим репозиторий "AuthRepository" удалить все пользовательские сессии по ID пользователя и ID пользовательского
-    устройства в БД.*/
+    /*Просим репозиторий "AuthRepository" hard удалить все пользовательские сессии по ID пользователя и ID
+    пользовательского устройства в БД.*/
     await this.authRepository.deleteAllSessionsExceptCurrentOneByUserIdAndSecurityDeviceId(userId, deviceId);
-    /*Просим репозиторий "SecurityDevicesRepository" удалить все пользовательские устройства, кроме текущего, по ID
+    /*Просим репозиторий "SecurityDevicesRepository" hard удалить все пользовательские устройства, кроме текущего, по ID
     пользовательского устройства и ID пользователя в БД.*/
     await this.securityDevicesRepository.deleteAllExceptCurrentOneBySecurityDeviceIdAndUserId(deviceId, userId);
   }

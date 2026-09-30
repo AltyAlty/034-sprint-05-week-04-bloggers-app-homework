@@ -46,7 +46,7 @@ export class UsersSAController {
   @Delete(SETTINGS.USERS_SA_DELETE_USER_BY_ID_PATH)
   @HttpCode(HttpStatus.NO_CONTENT)
   public async deleteUserById(@Param('id') id: string): Promise<void> {
-    /*Просим сервис "UsersService" удалить пользователя по ID.*/
-    await this.usersService.deleteById(id);
+    /*Просим сервис "UsersService" soft удалить пользователя по ID.*/
+    await this.usersService.markAsDeletedById(id);
   }
 }

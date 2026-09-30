@@ -1606,7 +1606,6 @@ CREATE TABLE public.security_devices (
 	ip VARCHAR NOT NULL,
 	last_active_date TIMESTAMP NOT NULL,
 	created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-	deleted_at TIMESTAMP DEFAULT NULL,
 	FOREIGN KEY (user_id)
 		REFERENCES public.users (id) MATCH SIMPLE
 		ON UPDATE NO ACTION
@@ -1620,7 +1619,6 @@ CREATE TABLE public.sessions (
 	iat TIMESTAMP NOT NULL,
 	exp TIMESTAMP NOT NULL,
 	created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-	deleted_at TIMESTAMP DEFAULT NULL,
 	FOREIGN KEY (user_id)
 		REFERENCES public.users (id) MATCH SIMPLE
 		ON UPDATE NO ACTION
@@ -1664,6 +1662,7 @@ CREATE TABLE public.post_likes_data (
 	user_id UUID NOT NULL,
 	like_status VARCHAR NOT NULL CHECK (like_status IN ('Like', 'Dislike')),
 	added_at TIMESTAMP NOT NULL DEFAULT NOW(),
+	deleted_at TIMESTAMP DEFAULT NULL,
 	UNIQUE (post_id, user_id),
 	FOREIGN KEY (post_id)
 		REFERENCES public.posts (id) MATCH SIMPLE
@@ -1711,6 +1710,7 @@ CREATE TABLE public.comment_likes_data (
 	user_id UUID NOT NULL,
 	like_status VARCHAR NOT NULL CHECK (like_status IN ('Like', 'Dislike')),
 	added_at TIMESTAMP NOT NULL DEFAULT NOW(),
+	deleted_at TIMESTAMP DEFAULT NULL,
 	UNIQUE (comment_id, user_id),
 	FOREIGN KEY (comment_id)
 		REFERENCES public.comments (id) MATCH SIMPLE

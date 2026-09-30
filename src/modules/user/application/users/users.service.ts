@@ -97,8 +97,12 @@ export class UsersService {
         field: 'code',
       });
 
-    /*Если пользователь был найден, то просим репозиторий "UsersRepository" пометить его как удаленный в БД.*/
+    /*Если пользователь был найден, то просим репозиторий "UsersRepository" soft удалить пользователя по ID в БД.*/
     await this.usersRepository.markAsDeletedById(id);
+    /*Просим репозиторий "CommentsRepository" soft удалить данные о лайках комментариев по ID пользователя в БД.*/
+    await this.commentsRepository.markAllCommentLikeDataAsDeletedByUserId(id);
+    /*Просим репозиторий "CommentsRepository" soft удалить комментарии по ID пользователя в БД.*/
+    await this.commentsRepository.markAllAsDeletedByUserId(id);
   }
 
   /*Метод для hard удаления пользователя по ID.*/
@@ -114,11 +118,11 @@ export class UsersService {
         field: 'code',
       });
 
-    /*Если пользователь был найден, то просим репозиторий "UsersRepository" удалить пользователя по ID в БД.*/
+    /*Если пользователь был найден, то просим репозиторий "UsersRepository" hard удалить пользователя по ID в БД.*/
     await this.usersRepository.deleteById(id);
-    /*Просим репозиторий "CommentsRepository" удалить данные о лайках комментариев по ID пользователя в БД.*/
+    /*Просим репозиторий "CommentsRepository" hard удалить данные о лайках комментариев по ID пользователя в БД.*/
     await this.commentsRepository.deleteAllCommentLikeDataByUserId(id);
-    /*Просим репозиторий "CommentsRepository" удалить комментарии по ID пользователя в БД.*/
+    /*Просим репозиторий "CommentsRepository" hard удалить комментарии по ID пользователя в БД.*/
     await this.commentsRepository.deleteAllByUserId(id);
   }
 }

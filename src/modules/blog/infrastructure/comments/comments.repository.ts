@@ -122,9 +122,19 @@ export class CommentsRepository {
     await this.dataSource.query(`DELETE FROM comments WHERE id = $1`, [id]);
   }
 
+  /*Метод для soft удаления комментариев по ID поста в БД.*/
+  public async markAllAsDeletedByPostId(id: string): Promise<void> {
+    await this.dataSource.query(`UPDATE comments SET deleted_at = $1 WHERE post_id = $2`, [new Date(), id]);
+  }
+
   /*Метод для hard удаления комментариев по ID поста в БД.*/
   public async deleteAllByPostId(id: string): Promise<void> {
     await this.dataSource.query(`DELETE FROM comments WHERE post_id = $1`, [id]);
+  }
+
+  /*Метод для soft удаления комментариев по ID блога в БД.*/
+  public async markAllAsDeletedByBlogId(id: string): Promise<void> {
+    await this.dataSource.query(`UPDATE comments SET deleted_at = $1 WHERE blog_id = $2`, [new Date(), id]);
   }
 
   /*Метод для hard удаления комментариев по ID блога в БД.*/
@@ -132,9 +142,22 @@ export class CommentsRepository {
     await this.dataSource.query(`DELETE FROM comments WHERE blog_id = $1`, [id]);
   }
 
+  /*Метод для soft удаления комментариев по ID пользователя в БД.*/
+  public async markAllAsDeletedByUserId(id: string): Promise<void> {
+    await this.dataSource.query(`UPDATE comments SET deleted_at = $1 WHERE user_id = $2`, [new Date(), id]);
+  }
+
   /*Метод для hard удаления комментариев по ID пользователя в БД.*/
   public async deleteAllByUserId(id: string): Promise<void> {
     await this.dataSource.query(`DELETE FROM comments WHERE user_id = $1`, [id]);
+  }
+
+  /*Метод для soft удаления данных о лайке комментария по ID комментария и ID пользователя в БД.*/
+  public async markCommentLikeDataAsDeletedByCommentIdAndUserId(commentId: string, userId: string): Promise<void> {
+    await this.dataSource.query(
+      `UPDATE comment_likes_data SET deleted_at = $1 WHERE comment_id = $1 AND user_id = $2`,
+      [new Date(), commentId, userId]
+    );
   }
 
   /*Метод для hard удаления данных о лайке комментария по ID комментария и ID пользователя в БД.*/
@@ -145,9 +168,22 @@ export class CommentsRepository {
     ]);
   }
 
+  /*Метод для soft удаления данных о лайках комментария по ID комментария в БД.*/
+  public async markAllCommentLikeDataAsDeletedByCommentId(id: string): Promise<void> {
+    await this.dataSource.query(`UPDATE comment_likes_data SET deleted_at = $1 WHERE comment_id = $2`, [
+      new Date(),
+      id,
+    ]);
+  }
+
   /*Метод для hard удаления данных о лайках комментария по ID комментария в БД.*/
   public async deleteAllCommentLikeDataByCommentId(id: string): Promise<void> {
     await this.dataSource.query(`DELETE FROM comment_likes_data WHERE comment_id = $1`, [id]);
+  }
+
+  /*Метод для soft удаления данных о лайках комментариев по ID поста в БД.*/
+  public async markAllCommentLikeDataAsDeletedByPostId(id: string): Promise<void> {
+    await this.dataSource.query(`UPDATE comment_likes_data SET deleted_at = $1 WHERE post_id = $2`, [new Date(), id]);
   }
 
   /*Метод для hard удаления данных о лайках комментариев по ID поста в БД.*/
@@ -155,9 +191,19 @@ export class CommentsRepository {
     await this.dataSource.query(`DELETE FROM comment_likes_data WHERE post_id = $1`, [id]);
   }
 
+  /*Метод для soft удаления данных о лайках комментария по ID блога в БД.*/
+  public async markAllCommentLikeDataAsDeletedByBlogId(id: string): Promise<void> {
+    await this.dataSource.query(`UPDATE comment_likes_data SET deleted_at = $1 WHERE blog_id = $2`, [new Date(), id]);
+  }
+
   /*Метод для hard удаления данных о лайках комментария по ID блога в БД.*/
   public async deleteAllCommentLikeDataByBlogId(id: string): Promise<void> {
     await this.dataSource.query(`DELETE FROM comment_likes_data WHERE blog_id = $1`, [id]);
+  }
+
+  /*Метод для soft удаления данных о лайках комментария по ID пользователя в БД.*/
+  public async markAllCommentLikeDataAsDeletedByUserId(id: string): Promise<void> {
+    await this.dataSource.query(`UPDATE comment_likes_data SET deleted_at = $1 WHERE user_id = $2`, [new Date(), id]);
   }
 
   /*Метод для hard удаления данных о лайках комментария по ID пользователя в БД.*/

@@ -122,8 +122,8 @@ export class BlogsSAController {
   @Delete(SETTINGS.BLOGS_SA_DELETE_BLOG_BY_ID_PATH)
   @HttpCode(HttpStatus.NO_CONTENT)
   public async deleteBlogById(@Param('id') id: string): Promise<void> {
-    /*Просим сервис "BlogsService" удалить блог по ID.*/
-    await this.blogsService.deleteById(id);
+    /*Просим сервис "BlogsService" soft удалить блог по ID.*/
+    await this.blogsService.markAsDeletedById(id);
   }
 
   /*008. DELETE-запрос по удалению поста по ID, используя URI-параметры.*/
@@ -132,7 +132,7 @@ export class BlogsSAController {
   @Delete(SETTINGS.DELETE_POST_BY_ID_SA_PATH)
   @HttpCode(HttpStatus.NO_CONTENT)
   public async deletePostById(@Param('id') id: string, @Param('blogId') blogId: string): Promise<void> {
-    /*Просим сервис "PostsService" удалить пост по ID.*/
-    await this.postsService.deleteById(id, blogId);
+    /*Просим сервис "PostsService" soft удалить пост по ID.*/
+    await this.postsService.markAsDeletedById(id, blogId);
   }
 }

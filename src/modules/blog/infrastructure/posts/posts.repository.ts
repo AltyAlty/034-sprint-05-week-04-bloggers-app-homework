@@ -130,9 +130,23 @@ export class PostsRepository {
     await this.dataSource.query(`DELETE FROM posts WHERE id = $1`, [id]);
   }
 
+  /*Метод для soft удаления постов по ID блога в БД.*/
+  public async markAllAsDeleteByBlogId(id: string): Promise<void> {
+    await this.dataSource.query(`UPDATE posts SET deleted_at = $1 WHERE blog_id = $2`, [new Date(), id]);
+  }
+
   /*Метод для hard удаления постов по ID блога в БД.*/
   public async deleteAllByBlogId(id: string): Promise<void> {
     await this.dataSource.query(`DELETE FROM posts WHERE blog_id = $1`, [id]);
+  }
+
+  /*Метод для soft удаления данных о лайке поста по ID поста и ID пользователя в БД.*/
+  public async markPostLikeDataAsDeletedByPostIdAndUserId(postId: string, userId: string): Promise<void> {
+    await this.dataSource.query(`UPDATE post_likes_data SET deleted_at = $1 WHERE post_id = $1 AND user_id = $2`, [
+      new Date(),
+      postId,
+      userId,
+    ]);
   }
 
   /*Метод для hard удаления данных о лайке поста по ID поста и ID пользователя в БД.*/
@@ -140,9 +154,19 @@ export class PostsRepository {
     await this.dataSource.query(`DELETE FROM post_likes_data WHERE post_id = $1 AND user_id = $2`, [postId, userId]);
   }
 
+  /*Метод для soft удаления данных о лайках поста по ID поста в БД.*/
+  public async markAllPostLikeDataAsDeletedByPostId(id: string): Promise<void> {
+    await this.dataSource.query(`UPDATE post_likes_data SET deleted_at = $1 WHERE post_id = $2`, [new Date(), id]);
+  }
+
   /*Метод для hard удаления данных о лайках поста по ID поста в БД.*/
   public async deleteAllPostLikeDataByPostId(id: string): Promise<void> {
     await this.dataSource.query(`DELETE FROM post_likes_data WHERE post_id = $1`, [id]);
+  }
+
+  /*Метод для soft удаления данных о лайках постов по ID блога в БД.*/
+  public async markAllPostLikeDataAsDeletedByBlogId(id: string): Promise<void> {
+    await this.dataSource.query(`UPDATE post_likes_data SET deleted_at = $1 WHERE blog_id = $2`, [new Date(), id]);
   }
 
   /*Метод для hard удаления данных о лайках постов по ID блога в БД.*/

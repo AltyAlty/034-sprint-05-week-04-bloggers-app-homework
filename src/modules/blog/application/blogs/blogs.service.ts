@@ -53,7 +53,9 @@ export class BlogsService {
         field: 'id',
       });
 
-    /*Если блог был найден, то просим репозиторий "BlogsRepository" пометить его как удаленный в БД.*/
+    /*Если блог был найден, то просим сервис "PostsService" soft удалить посты по ID блога.*/
+    await this.postsService.markAllAsDeletedByBlogId(id);
+    /*Просим репозиторий "BlogsRepository" soft удалить блог по ID в БД.*/
     await this.blogsRepository.markAsDeletedById(id);
   }
 
@@ -70,9 +72,9 @@ export class BlogsService {
         field: 'id',
       });
 
-    /*Просим сервис "PostsService" удалить посты по ID блога.*/
+    /*Если блог был найден, то просим сервис "PostsService" hard удалить посты по ID блога.*/
     await this.postsService.deleteAllByBlogId(id);
-    /*Если блог был найден, то просим репозиторий "BlogsRepository" удалить блог по ID в БД.*/
+    /*Просим репозиторий "BlogsRepository" hard удалить блог по ID в БД.*/
     await this.blogsRepository.deleteById(id);
   }
 }

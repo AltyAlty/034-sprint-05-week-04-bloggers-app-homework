@@ -11,7 +11,6 @@ import { PostLikeStatusOutputDTO } from '../../api/posts/output-dto/post-like-st
 import { DomainException, DomainExceptionCode } from '../../../../core/exceptions/domain/domain.exception';
 import { UserAccessJwtAuthContextDTO } from '../../../../core/guards/access-jwt-auth/dto/user-access-jwt-auth-context.dto';
 import { PostLikeStatusDomainDTO } from '../../domain/posts/domain-dto/post-like-status.domain-dto';
-import { CreatePostDTO } from './dto/create-post.dto';
 import { CreatePostForBlogDTO } from './dto/create-post-for-blog.dto';
 import { UpdatePostDTO } from './dto/update-post.dto';
 import { UpdatePostLikeStatusByIdDTO } from './dto/update-post-like-status-by-id.dto';
@@ -24,25 +23,6 @@ export class PostsService {
     private readonly blogsRepository: BlogsRepository,
     private readonly postsRepository: PostsRepository
   ) {}
-
-  /*Метод для создания поста.*/
-  public async create(dto: CreatePostDTO): Promise<PostOutputDTO> {
-    /*Просим репозиторий "BlogsRepository" найти блог по ID.*/
-    const blog: BlogDb | null = await this.blogsRepository.findById(dto.blogId);
-
-    /*Если блог не был найден, то выбрасываем исключение с информацией об этом.*/
-    if (!blog)
-      throw new DomainException({
-        code: DomainExceptionCode.BlogNotFoundWhilePostCreating,
-        message: 'Blog to create a post not found',
-        field: 'blogId',
-      });
-
-    /*Если блог был найден, то просим репозиторий "PostsRepository" создать пост в БД.*/
-    const post: PostDb | null = await this.postsRepository.create({ ...dto });
-    /*Преобразовываем пост из БД в подготовленный для отправки клиенту пост и возвращаем его.*/
-    return PostOutputDTO.mapFromPostDbToPostOutputDTO(post, PostLikeStatusOutputDTO.None, []);
-  }
 
   /*Метод для создания поста в блоге.*/
   public async createForBlog(dto: CreatePostForBlogDTO, blogId: string): Promise<PostOutputDTO> {
@@ -137,7 +117,7 @@ export class PostsService {
 
     /*Если пользователь хочет убрать лайк/дизлайк.*/
     if (likeStatus === PostLikeStatusInputDTO.None) {
-      /*Просим репозиторий "PostsRepository" удалить данные о лайке поста по ID поста и ID пользователя в БД.*/
+      /*Просим репозиторий "PostsRepository" hard удалить данные о лайке поста по ID поста и ID пользователя в БД.*/
       await this.postsRepository.deletePostLikeDataByPostIdAndUserId(id, userId);
 
       /*Просим репозиторий "PostsRepository" изменить количество лайков и дизлайков у поста в БД:
@@ -216,7 +196,21 @@ export class PostsService {
   }
 
   /*Метод для soft удаления поста по ID.*/
-  public async markAsDeletedById(id: string): Promise<void> {
+  public async markAsDeletedById(id: string, blogId?: string): Promise<void> {
+    /*Если был указан ID блога, то проверяем его существование.*/
+    if (blogId) {
+      /*Просим репозиторий "BlogsRepository" найти блог по ID.*/
+      const blog: BlogDb | null = await this.blogsRepository.findById(blogId);
+
+      /*Если блог не был найден, то выбрасываем исключение с информацией об этом.*/
+      if (!blog)
+        throw new DomainException({
+          code: DomainExceptionCode.BlogNotFoundWhilePostDeleting,
+          message: 'Blog to delete a post not found',
+          field: 'blogId',
+        });
+    }
+
     /*Просим репозиторий "PostsRepository" найти пост по ID в БД.*/
     const post: PostDb | null = await this.postsRepository.findById(id);
 
@@ -228,7 +222,11 @@ export class PostsService {
         field: 'id',
       });
 
-    /*Если пост был найден, то просим репозиторий "PostsRepository" пометить его как удаленный в БД.*/
+    /*Если пост был найден, то просим сервис "CommentsService" soft удалить комментарии по ID поста.*/
+    await this.commentsService.markAllAsDeletedByPostId(id);
+    /*Просим репозиторий "PostsRepository" soft удалить данные о лайках поста по ID поста в БД.*/
+    await this.postsRepository.markAllPostLikeDataAsDeletedByPostId(id);
+    /*Просим репозиторий "PostsRepository" soft удалить пост по ID в БД.*/
     await this.postsRepository.markAsDeletedById(id);
   }
 
@@ -259,21 +257,31 @@ export class PostsService {
         field: 'id',
       });
 
-    /*Если пост был найден, то просим сервис "CommentsService" удалить комментарии по ID поста.*/
+    /*Если пост был найден, то просим сервис "CommentsService" hard удалить комментарии по ID поста.*/
     await this.commentsService.deleteAllByPostId(id);
-    /*Просим репозиторий "PostsRepository" удалить данные о лайках поста по ID поста в БД.*/
+    /*Просим репозиторий "PostsRepository" hard удалить данные о лайках поста по ID поста в БД.*/
     await this.postsRepository.deleteAllPostLikeDataByPostId(id);
-    /*Просим репозиторий "PostsRepository" удалить пост по ID в БД.*/
+    /*Просим репозиторий "PostsRepository" hard удалить пост по ID в БД.*/
     await this.postsRepository.deleteById(id);
+  }
+
+  /*Метод для soft удаления постов по ID блога.*/
+  public async markAllAsDeletedByBlogId(id: string): Promise<void> {
+    /*Просим репозиторий "CommentsService" soft удалить комментарии по ID блога.*/
+    await this.commentsService.markAllAsDeletedByBlogId(id);
+    /*Просим репозиторий "PostsRepository" soft удалить данные о лайках постов по ID блога в БД.*/
+    await this.postsRepository.markAllPostLikeDataAsDeletedByBlogId(id);
+    /*Просим репозиторий "PostsRepository" soft удалить посты по ID блога в БД.*/
+    await this.postsRepository.markAllAsDeleteByBlogId(id);
   }
 
   /*Метод для hard удаления постов по ID блога.*/
   public async deleteAllByBlogId(id: string): Promise<void> {
-    /*Просим репозиторий "CommentsService" удалить комментарии по ID блога.*/
+    /*Просим репозиторий "CommentsService" hard удалить комментарии по ID блога.*/
     await this.commentsService.deleteAllByBlogId(id);
-    /*Просим репозиторий "PostsRepository" удалить данные о лайках постов по ID блога в БД.*/
+    /*Просим репозиторий "PostsRepository" hard удалить данные о лайках постов по ID блога в БД.*/
     await this.postsRepository.deleteAllPostLikeDataByBlogId(id);
-    /*Просим репозиторий "PostsRepository" удалить посты по ID блога в БД.*/
+    /*Просим репозиторий "PostsRepository" hard удалить посты по ID блога в БД.*/
     await this.postsRepository.deleteAllByBlogId(id);
   }
 }

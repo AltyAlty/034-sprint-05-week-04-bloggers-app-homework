@@ -71,7 +71,7 @@ export class CommentsController {
     @Param('id') id: string,
     @ExtractUserDataFromRequest() userAccessJwtAuthContext: UserAccessJwtAuthContextDTO
   ): Promise<void> {
-    /*Просим сервис "CommentsService" удалить комментарий по ID.*/
-    await this.commentsService.deleteById(id, userAccessJwtAuthContext);
+    /*Просим сервис "CommentsService" soft удалить комментарий по ID.*/
+    await this.commentsService.markAsDeletedById(id, userAccessJwtAuthContext);
   }
 }

@@ -1,50 +1,90 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
+import { UserDb, UserListDb } from './types/user-db.type';
 import { normalizeEmail } from '../../../../core/utils/email/normalize-email.util';
-import { UserDocumentType } from '../../domain/users/document-types/user.document-type';
-import type { UserModelType } from '../../domain/users/model-types/user.model-type';
-import { User } from '../../domain/users/user.entity';
 
 /*Репозиторий для пользователей.*/
 @Injectable()
 export class UsersRepository {
-  public constructor(@InjectModel(User.name) private readonly userModel: UserModelType) {}
+  public constructor(@InjectDataSource() private readonly dataSource: DataSource) {}
 
-  /*Метод для сохранения пользователя в БД.*/
-  public async save(user: UserDocumentType): Promise<void> {
-    await user.save();
+  /*Метод для создания пользователя в БД.*/
+  public async create(dto: { login: string; email: string; passwordHash: string }): Promise<string> {
+    const result: { id: string }[] = await this.dataSource.query(
+      `INSERT INTO users (login, original_email, email, password_hash) VALUES ($1, $2, $3, $4) RETURNING id`,
+      [dto.login, dto.email, normalizeEmail(dto.email), dto.passwordHash]
+    );
+
+    return result[0].id;
+  }
+
+  /*Метод для создания подтвержденного пользователя в БД.*/
+  public async createConfirmed(dto: { login: string; email: string; passwordHash: string }): Promise<UserDb> {
+    const result: UserListDb = await this.dataSource.query(
+      `INSERT INTO users (login, original_email, email, password_hash, is_confirmed) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [dto.login, dto.email, normalizeEmail(dto.email), dto.passwordHash, true]
+    );
+
+    return result[0];
   }
 
   /*Метод для поиска пользователя по ID в БД.*/
-  public async findById(id: string): Promise<UserDocumentType | null> {
-    /*Просим модель "UserModel" найти пользователя по ID в БД.*/
-    return await this.userModel.findOne({ _id: id, deletedAt: null });
+  public async findById(id: string): Promise<UserDb | null> {
+    const result: UserListDb = await this.dataSource.query(`SELECT * FROM users WHERE id = $1 AND deleted_at IS NULL`, [
+      id,
+    ]);
+
+    return result[0] ?? null;
   }
 
   /*Метод для поиска пользователя по логину в БД.*/
-  public async findByLogin(login: string): Promise<UserDocumentType | null> {
-    /*Просим модель "UserModel" найти пользователя по логину в БД.*/
-    return await this.userModel.findOne({ login, deletedAt: null });
+  public async findByLogin(login: string): Promise<UserDb | null> {
+    const result: UserListDb = await this.dataSource.query(
+      `SELECT * FROM users WHERE LOWER(login) = LOWER($1) AND deleted_at IS NULL`,
+      [login]
+    );
+
+    return result[0] ?? null;
   }
 
   /*Метод для поиска пользователя по email в БД.*/
-  public async findByEmail(email: string): Promise<UserDocumentType | null> {
-    /*Просим модель "UserModel" найти пользователя по email в БД.*/
-    return await this.userModel.findOne({ email: normalizeEmail(email), deletedAt: null });
+  public async findByEmail(email: string): Promise<UserDb | null> {
+    const result: UserListDb = await this.dataSource.query(
+      `SELECT * FROM users WHERE LOWER(email) = LOWER($1) AND deleted_at IS NULL`,
+      [normalizeEmail(email)]
+    );
+
+    return result[0] ?? null;
   }
 
   /*Метод для поиска пользователя по логину или email в БД.*/
-  public async findByLoginOrEmail(loginOrEmail: string): Promise<UserDocumentType | null> {
-    /*Просим модель "UserModel" найти пользователя по логину или email в БД.*/
-    return await this.userModel.findOne({
-      $or: [{ email: normalizeEmail(loginOrEmail) }, { login: loginOrEmail }],
-      deletedAt: null,
-    });
+  public async findByLoginOrEmail(loginOrEmail: string): Promise<UserDb | null> {
+    const result: UserListDb = await this.dataSource.query(
+      `SELECT * FROM users  WHERE (email = $1 OR login = $2) AND deleted_at IS NULL`,
+      [normalizeEmail(loginOrEmail), loginOrEmail]
+    );
+
+    return result[0] ?? null;
+  }
+
+  /*Метод для подтверждения регистрации пользователя по ID пользователя в БД.*/
+  public async confirmUserById(id: string): Promise<void> {
+    await this.dataSource.query(`UPDATE users SET is_confirmed = true WHERE id = $1`, [id]);
+  }
+
+  /*Метод для изменения хеша пароля пользователя по ID в БД.*/
+  public async updateUserPasswordHashById(id: string, passwordHash: string): Promise<void> {
+    await this.dataSource.query(`UPDATE users SET password_hash = $1 WHERE id = $2`, [passwordHash, id]);
+  }
+
+  /*Метод для soft удаления пользователя по ID в БД.*/
+  public async markAsDeletedById(id: string): Promise<void> {
+    await this.dataSource.query(`UPDATE users SET deleted_at = $1 WHERE id = $2`, [new Date(), id]);
   }
 
   /*Метод для hard удаления пользователя по ID в БД.*/
   public async deleteById(id: string): Promise<void> {
-    /*Просим модель "UserModel" удалить пользователя по ID в БД.*/
-    await this.userModel.deleteOne({ _id: id });
+    await this.dataSource.query(`DELETE FROM users WHERE id = $1`, [id]);
   }
 }

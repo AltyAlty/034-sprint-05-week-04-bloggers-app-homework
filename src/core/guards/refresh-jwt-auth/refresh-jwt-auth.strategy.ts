@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { AuthPostgresqlService } from '../../../modules/user/application/auth/auth-postgresql.service';
-import { UserPostgresqlDb } from '../../../modules/user/infrastructure/users/postgresql-types/user-postgresql-db.type';
+import { AuthService } from '../../../modules/user/application/auth/auth.service';
+import { UserDb } from '../../../modules/user/infrastructure/users/types/user-db.type';
 import { AuthConfig } from '../../../modules/user/config/auth.config';
 import { DomainException, DomainExceptionCode } from '../../exceptions/domain/domain.exception';
 import { RefreshJwtPayloadDTO } from './dto/refresh-jwt-payload.dto';
@@ -13,7 +13,7 @@ import { UserRefreshJwtAuthContextDTO } from './dto/user-refresh-jwt-auth-contex
 export class RefreshJwtAuthStrategy extends PassportStrategy(Strategy, 'refresh-jwt') {
   public constructor(
     public readonly authConfig: AuthConfig,
-    private readonly authService: AuthPostgresqlService
+    private readonly authService: AuthService
   ) {
     /*Настраиваем как библиотеке Passport.js работать с Refresh JWT.*/
     super({
@@ -35,7 +35,7 @@ export class RefreshJwtAuthStrategy extends PassportStrategy(Strategy, 'refresh-
   декодированный payload из Refresh JWT.*/
   public async validate(payload: RefreshJwtPayloadDTO): Promise<UserRefreshJwtAuthContextDTO> {
     /*Просим сервис "AuthService" валидировать payload из Refresh JWT.*/
-    const user: UserPostgresqlDb | null = await this.authService.validateRefreshJwtPayload(payload);
+    const user: UserDb | null = await this.authService.validateRefreshJwtPayload(payload);
 
     /*Если payload из Refresh JWT не был валидирован, то выбрасываем исключение "DomainException" с информацией об
     этом.*/

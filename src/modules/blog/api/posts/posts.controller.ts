@@ -1,35 +1,18 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  HttpCode,
-  HttpStatus,
-  Param,
-  Post,
-  Put,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { CommentsPostgresqlService } from '../../application/comments/comments-postgresql.service';
-import { PostsPostgresqlService } from '../../application/posts/posts-postgresql.service';
-import { CommentsPostgresqlQueryService } from '../../application/comments/comments-postgresql.query-service';
-import { PostsPostgresqlQueryService } from '../../application/posts/posts-postgresql.query-service';
+import { CommentsService } from '../../application/comments/comments.service';
+import { PostsService } from '../../application/posts/posts.service';
+import { CommentsQueryService } from '../../application/comments/comments.query-service';
+import { PostsQueryService } from '../../application/posts/posts.query-service';
 import { CreateCommentForPostInputDTO } from './input-dto/create-comment-for-post.input-dto';
-import { CreatePostInputDTO } from './input-dto/create-post.input-dto';
 import { GetCommentListByPostIdQueryInputDTO } from './input-dto/query/get-comment-list-by-post-id-query.input-dto';
 import { GetPostListQueryInputDTO } from './input-dto/query/get-post-list-query.input-dto';
-import { UpdatePostByIdInputDTO } from './input-dto/update-post-by-id.input-dto';
 import { UpdatePostLikeStatusByIdInputDTO } from './input-dto/update-post-like-status-by-id.input-dto';
 import { PaginationMetaDataOutputDTO } from '../../../../core/pagination/output-dto/pagination-meta-data.output-dto';
-import { CommentOutputDTO } from '../comments/output-dto/comment.output-dto';
-import { CommentListOutputDTO } from '../comments/output-dto/comment-list.output-dto';
-import { PostOutputDTO } from './output-dto/post.output-dto';
-import { PostListOutputDTO } from './output-dto/post-list.output-dto';
+import { CommentListOutputDTO, CommentOutputDTO } from '../comments/output-dto/comment.output-dto';
+import { PostListOutputDTO, PostOutputDTO } from './output-dto/post.output-dto';
 import { AccessJwtAuthGuard } from '../../../../core/guards/access-jwt-auth/access-jwt-auth.guard';
 import { UserAccessJwtAuthContextDTO } from '../../../../core/guards/access-jwt-auth/dto/user-access-jwt-auth-context.dto';
-import { BasicAuthGuard } from '../../../../core/guards/basic-auth/basic-auth.guard';
 import { OptionalAccessJwtAuthGuard } from '../../../../core/guards/optional-access-jwt-auth/optional-access-jwt-auth.guard';
 import { SETTINGS } from '../../../../core/settings/settings';
 import { PostsControllerSwaggerDecorators } from '../../../../core/swagger/decorators/blog-module/posts-controller.swagger-decorators';
@@ -40,10 +23,10 @@ import { ExtractUserDataFromRequest } from '../../../user/api/auth/decorators/pa
 @Controller(SETTINGS.POSTS_PREFIX)
 export class PostsController {
   public constructor(
-    private readonly postsService: PostsPostgresqlService,
-    private readonly postsQueryService: PostsPostgresqlQueryService,
-    private readonly commentsService: CommentsPostgresqlService,
-    private readonly commentsQueryService: CommentsPostgresqlQueryService
+    private readonly postsService: PostsService,
+    private readonly postsQueryService: PostsQueryService,
+    private readonly commentsService: CommentsService,
+    private readonly commentsQueryService: CommentsQueryService
   ) {}
 
   /*001. POST-запрос по созданию комментария в посте.*/
@@ -112,35 +95,5 @@ export class PostsController {
   ): Promise<void> {
     /*Просим сервис "PostsService" изменить статус лайка поста по ID поста.*/
     await this.postsService.updatePostLikeStatusById(id, body, userAccessJwtAuthContext);
-  }
-
-  /*-006. POST-запрос по созданию поста.*/
-  @PostsControllerSwaggerDecorators.createPost
-  @UseGuards(BasicAuthGuard)
-  @Post(SETTINGS.POSTS_CREATE_POST_PATH)
-  @HttpCode(HttpStatus.CREATED)
-  public async createPost(@Body() body: CreatePostInputDTO): Promise<PostOutputDTO> {
-    /*Просим сервис "PostsService" создать пост.*/
-    return this.postsService.create(body);
-  }
-
-  /*-007. PUT-запрос по изменению поста по ID, используя URI-параметры.*/
-  @PostsControllerSwaggerDecorators.updatePostById
-  @UseGuards(BasicAuthGuard)
-  @Put(SETTINGS.POSTS_UPDATE_POST_BY_ID_PATH)
-  @HttpCode(HttpStatus.NO_CONTENT)
-  public async updatePostById(@Param('id') id: string, @Body() body: UpdatePostByIdInputDTO): Promise<void> {
-    /*Просим сервис "PostsService" изменить пост по ID.*/
-    await this.postsService.updateById(id, body);
-  }
-
-  /*-008. DELETE-запрос по удалению поста по ID, используя URI-параметры.*/
-  @PostsControllerSwaggerDecorators.deletePostById
-  @UseGuards(BasicAuthGuard)
-  @Delete(SETTINGS.POSTS_DELETE_POST_BY_ID_PATH)
-  @HttpCode(HttpStatus.NO_CONTENT)
-  public async deletePostById(@Param('id') id: string): Promise<void> {
-    /*Просим сервис "PostsService" удалить пост по ID.*/
-    await this.postsService.deleteById(id);
   }
 }

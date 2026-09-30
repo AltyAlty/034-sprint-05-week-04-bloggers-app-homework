@@ -16,6 +16,5 @@ export class TestingController {
   @HttpCode(HttpStatus.NO_CONTENT)
   public async clearDb(): Promise<void> {
     await this.testingService.clearDb();
-    await this.testingService.clearPostgresDb();
   }
 }

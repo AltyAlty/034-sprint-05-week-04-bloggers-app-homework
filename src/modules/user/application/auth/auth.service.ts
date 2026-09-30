@@ -1,33 +1,23 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
-import { InjectModel } from '@nestjs/mongoose';
 import { randomUUID } from 'crypto';
 import { add } from 'date-fns';
-import { Types } from 'mongoose';
 import { Argon2Adapter } from '../../../../core/security/cryptography/argon2.adapter';
 import { UsersService } from '../users/users.service';
 import { AuthRepository } from '../../infrastructure/auth/auth.repository';
 import { SecurityDevicesRepository } from '../../infrastructure/security-devices/security-devices.repository';
 import { UsersRepository } from '../../infrastructure/users/users.repository';
+import { EmailConfirmationDb } from '../../infrastructure/auth/types/email-confirmation-db.type';
+import { PasswordRecoveryCodeDataDb } from '../../infrastructure/auth/types/password-recovery-code-data-db.type';
+import { SessionDb } from '../../infrastructure/auth/types/session-db.type';
+import { SecurityDeviceDb } from '../../infrastructure/security-devices/types/security-device-db.type';
+import { UserDb } from '../../infrastructure/users/types/user-db.type';
 import { DomainException, DomainExceptionCode } from '../../../../core/exceptions/domain/domain.exception';
 import { UserLocalAuthContextDTO } from '../../../../core/guards/local-auth/dto/user-local-auth-context.dto';
 import { UserRefreshJwtAuthContextDTO } from '../../../../core/guards/refresh-jwt-auth/dto/user-refresh-jwt-auth-context.dto';
 import { EmailManager } from '../../../../core/modules/notification/email-manager/email.manager';
 import { UserAgentAndIpDTO } from '../../api/auth/decorators/param-extraction/dto/user-agent-and-ip.dto';
 import { AuthConfig } from '../../config/auth.config';
-import { EmailConfirmationDocumentType } from '../../domain/auth/document-types/email-confirmation.document-type';
-import { PasswordRecoveryCodeDataDocumentType } from '../../domain/auth/document-types/password-recovery-code-data.document-type';
-import { SessionDocumentType } from '../../domain/auth/document-types/session.document-type';
-import { EmailConfirmation } from '../../domain/auth/email-confirmation.entity';
-import type { EmailConfirmationModelType } from '../../domain/auth/model-types/email-confirmation.model-type';
-import type { PasswordRecoveryCodeDataModelType } from '../../domain/auth/model-types/password-recovery-code-data.model-type';
-import type { SessionModelType } from '../../domain/auth/model-types/session.model-type';
-import { PasswordRecoveryCodeData } from '../../domain/auth/password-recovery-code-data.entity';
-import { Session } from '../../domain/auth/session.entity';
-import { SecurityDeviceDocumentType } from '../../domain/security-devices/document-types/security-device.document-type';
-import type { SecurityDeviceModelType } from '../../domain/security-devices/model-types/security-device.model-type';
-import { SecurityDevice } from '../../domain/security-devices/security-device.entity';
-import { UserDocumentType } from '../../domain/users/document-types/user.document-type';
 import { ConfirmUserByCodeDTO } from './dto/confirm-user-by-code.dto';
 import { RegisterUserDTO } from './dto/register-user.dto';
 import { ResendConfirmationEmailDTO } from './dto/resend-confirmation-email.dto';
@@ -42,13 +32,6 @@ import { ValidateUserLocalAuthCredentialsDTO } from './dto/validate-user-local-a
 @Injectable()
 export class AuthService {
   public constructor(
-    @InjectModel(EmailConfirmation.name)
-    private readonly emailConfirmationModel: EmailConfirmationModelType,
-    @InjectModel(PasswordRecoveryCodeData.name)
-    private readonly passwordRecoveryCodeDataModel: PasswordRecoveryCodeDataModelType,
-    @InjectModel(Session.name) private readonly sessionModel: SessionModelType,
-    @InjectModel(SecurityDevice.name)
-    private readonly securityDeviceModel: SecurityDeviceModelType,
     private readonly authConfig: AuthConfig,
     private readonly jwtService: JwtService,
     private readonly argon2Adapter: Argon2Adapter,
@@ -61,6 +44,8 @@ export class AuthService {
 
   /*Метод для регистрации пользователя.*/
   public async registerUser(dto: RegisterUserDTO): Promise<void> {
+    /*Просим сервис "UsersService" создать пользователя.*/
+    const userId: string = await this.usersService.create(dto);
     /*Генерируем код подтверждения регистрации пользователя.*/
     const confirmationCode: string = randomUUID();
 
@@ -69,18 +54,8 @@ export class AuthService {
       minutes: this.authConfig.CONFIRMATION_REGISTRATION_CODE_EXPIRATION_TIME_IN_MINUTES,
     });
 
-    /*Просим сервис "UsersService" создать пользователя.*/
-    const userId: string = await this.usersService.create(dto);
-
-    /*Просим модель "EmailConfirmationModel" создать данные о подтверждении регистрации пользователя.*/
-    const emailConfirmation: EmailConfirmationDocumentType = this.emailConfirmationModel.createInstance({
-      userId,
-      confirmationCode,
-      expirationDate,
-    });
-
-    /*Просим репозиторий "AuthRepository" сохранить данные о подтверждении регистрации пользователя в БД.*/
-    await this.authRepository.saveEmailConfirmation(emailConfirmation);
+    /*Просим репозиторий "AuthRepository" создать данные о подтверждении регистрации пользователя в БД.*/
+    await this.authRepository.createEmailConfirmation({ userId, confirmationCode, expirationDate });
 
     /*Просим менеджер "EmailManager" отправить письмо о подтверждении регистрации пользователя. Если использовать здесь
     ключевое слово await, то при ошибке во время отправки письма будет происходить следующее:
@@ -102,7 +77,7 @@ export class AuthService {
   /*Метод для повторной отправки письма для подтверждения регистрации пользователя.*/
   public async resendConfirmationEmail(dto: ResendConfirmationEmailDTO): Promise<void> {
     /*Просим репозиторий "UsersRepository" найти пользователя по email в БД.*/
-    const user: UserDocumentType | null = await this.usersRepository.findByEmail(dto.email);
+    const user: UserDb | null = await this.usersRepository.findByEmail(dto.email);
 
     /*Если пользователь не был найден, то выбрасываем исключение с информацией об этом.*/
     if (!user)
@@ -113,13 +88,15 @@ export class AuthService {
       });
 
     /*Если регистрация пользователя уже была подтверждена, то выбрасываем исключение с информацией об этом.*/
-    if (user.isConfirmed)
+    if (user.is_confirmed)
       throw new DomainException({
         code: DomainExceptionCode.AlreadyConfirmedUserRegistration,
         message: 'Registration has already been confirmed',
         field: 'email',
       });
 
+    /*Получаем ID пользователя.*/
+    const userId: string = user.id;
     /*Если регистрация пользователя еще не была подтверждена, то генерируем код подтверждения регистрации
     пользователя.*/
     const confirmationCode: string = randomUUID();
@@ -129,25 +106,20 @@ export class AuthService {
       minutes: this.authConfig.CONFIRMATION_REGISTRATION_CODE_EXPIRATION_TIME_IN_MINUTES,
     });
 
-    /*Получаем ID пользователя.*/
-    const userId: string = user.id;
-
     /*Просим репозиторий "AuthRepository" найти данные о подтверждении регистрации пользователя по ID пользователя в
     БД.*/
-    let emailConfirmation: EmailConfirmationDocumentType | null =
+    const emailConfirmation: EmailConfirmationDb | null =
       await this.authRepository.findEmailConfirmationByUserId(userId);
 
-    /*Если данные о подтверждении регистрации пользователя были найдены, то изменяем их.*/
+    /*Если данные о подтверждении регистрации пользователя были найдены, то просим репозиторий "AuthRepository" изменить
+    их по ID пользователя в БД.*/
     if (emailConfirmation) {
-      emailConfirmation.updateInstance({ confirmationCode, expirationDate });
+      await this.authRepository.updateEmailConfirmationByUserId(userId, { confirmationCode, expirationDate });
     } else {
-      /*Если данные о подтверждении регистрации пользователя не были найдены, то просим модель "EmailConfirmationModel"
-      создать такие данные.*/
-      emailConfirmation = this.emailConfirmationModel.createInstance({ userId, confirmationCode, expirationDate });
+      /*Если данные о подтверждении регистрации пользователя не были найдены, то просим репозиторий "AuthRepository"
+      создать такие данные в БД.*/
+      await this.authRepository.createEmailConfirmation({ userId, confirmationCode, expirationDate });
     }
-
-    /*Просим репозиторий "AuthRepository" сохранить данные о подтверждении регистрации пользователя в БД.*/
-    await this.authRepository.saveEmailConfirmation(emailConfirmation);
 
     /*Просим менеджер "EmailManager" повторно отправить письмо о подтверждении регистрации пользователя.*/
     this.emailManager
@@ -159,8 +131,9 @@ export class AuthService {
   public async confirmByCode(dto: ConfirmUserByCodeDTO): Promise<void> {
     /*Просим репозиторий "AuthRepository" найти данные о подтверждении регистрации пользователя по коду подтверждения
     регистрации пользователя.*/
-    const emailConfirmation: EmailConfirmationDocumentType | null =
-      await this.authRepository.findEmailConfirmationByCode(dto.code);
+    const emailConfirmation: EmailConfirmationDb | null = await this.authRepository.findEmailConfirmationByCode(
+      dto.code
+    );
 
     /*Если данные о подтверждении регистрации пользователя не были найдены, то выбрасываем исключение с информацией об
     этом.*/
@@ -173,7 +146,7 @@ export class AuthService {
 
     /*Если срок действия кода подтверждения регистрации пользователя истек, то выбрасываем исключение с информацией об
     этом.*/
-    if (emailConfirmation.expirationDate <= new Date())
+    if (emailConfirmation.expiration_date <= new Date())
       throw new DomainException({
         code: DomainExceptionCode.ExpiredUserRegistrationConfirmationCode,
         message: 'Confirmation code is expired',
@@ -182,9 +155,9 @@ export class AuthService {
 
     /*Если данные о подтверждении регистрации пользователя были найдены и срок действия кода подтверждения регистрации
     пользователя не истек, то получаем ID пользователя.*/
-    const userId: string = emailConfirmation.userId;
+    const userId: string = emailConfirmation.user_id;
     /*Просим репозиторий "UsersRepository" найти пользователя по ID в БД.*/
-    const user: UserDocumentType | null = await this.usersRepository.findById(userId);
+    const user: UserDb | null = await this.usersRepository.findById(userId);
 
     /*Если пользователь не был найден, то выбрасываем исключение с информацией об этом.*/
     if (!user)
@@ -195,18 +168,16 @@ export class AuthService {
       });
 
     /*Если регистрация пользователя уже была подтверждена, то выбрасываем исключение с информацией об этом.*/
-    if (user.isConfirmed)
+    if (user.is_confirmed)
       throw new DomainException({
         code: DomainExceptionCode.AlreadyConfirmedUserRegistration,
         message: 'Registration has already been confirmed',
         field: 'code',
       });
 
-    /*Если пользователь был найден и его регистрация еще не была подтверждена, то подтверждаем регистрацию
-    пользователя.*/
-    user.confirmUser();
-    /*Просим репозиторий "UsersRepository" сохранить подтвержденного пользователя в БД.*/
-    await this.usersRepository.save(user);
+    /*Если пользователь был найден и его регистрация еще не была подтверждена, то просим репозиторий "UsersRepository"
+    подтвердить регистрацию пользователя по ID пользователя в БД.*/
+    await this.usersRepository.confirmUserById(userId);
     /*Просим репозиторий "AuthRepository" удалить все данные о подтверждении регистрации пользователя по ID пользователя
     в БД.*/
     await this.authRepository.deleteAllEmailConfirmationsByUserId(userId);
@@ -215,7 +186,7 @@ export class AuthService {
   /*Метод для отправки письма с кодом восстановления пароля пользователя.*/
   public async sendPasswordRecoveryCode(dto: SendPasswordRecoveryCodeDTO): Promise<void> {
     /*Просим репозиторий "UsersRepository" найти пользователя по email в БД.*/
-    const user: UserDocumentType | null = await this.usersRepository.findByEmail(dto.email);
+    const user: UserDb | null = await this.usersRepository.findByEmail(dto.email);
     /*Если пользователь не был найден, то завершаем работу метода, чтобы не возвращать ошибку клиенту.*/
     if (!user) return;
     /*Если пользователь был найден, то получаем ID пользователя.*/
@@ -230,24 +201,21 @@ export class AuthService {
 
     /*Просим репозиторий "AuthRepository" найти данные о коде восстановления пароля пользователя по ID пользователя в
     БД.*/
-    let passwordRecoveryCodeData: PasswordRecoveryCodeDataDocumentType | null =
+    const passwordRecoveryCodeData: PasswordRecoveryCodeDataDb | null =
       await this.authRepository.findRecoveryPasswordCodeDataByUserId(userId);
 
-    /*Если данные о коде восстановления пароля пользователя были найдены, то изменяем их.*/
+    /*Если данные о коде восстановления пароля пользователя были найдены, то просим репозиторий "AuthRepository"
+    изменить их по ID пользователя в БД.*/
     if (passwordRecoveryCodeData) {
-      passwordRecoveryCodeData.updateInstance({ passwordRecoveryCode, expirationDate });
-    } else {
-      /*Если данные о коде восстановления пароля пользователя не были найдены, то просим модель
-      "PasswordRecoveryCodeDataModel" создать такие данные.*/
-      passwordRecoveryCodeData = this.passwordRecoveryCodeDataModel.createInstance({
-        userId,
+      await this.authRepository.updatePasswordRecoveryCodeDataByUserId(userId, {
         passwordRecoveryCode,
         expirationDate,
       });
+    } else {
+      /*Если данные о коде восстановления пароля пользователя не были найдены, то просим репозиторий "AuthRepository"
+      создать такие данные в БД.*/
+      await this.authRepository.createPasswordRecoveryCodeData({ userId, passwordRecoveryCode, expirationDate });
     }
-
-    /*Просим репозиторий "AuthRepository" сохранить данные о коде восстановления пароля пользователя в БД.*/
-    await this.authRepository.savePasswordRecoveryCodeData(passwordRecoveryCodeData);
 
     /*Просим менеджер "EmailManager" отправить письмо с кодом восстановления пароля пользователя.*/
     this.emailManager
@@ -259,7 +227,7 @@ export class AuthService {
   public async updatePasswordByPasswordRecoveryCode(dto: UpdatePasswordByPasswordRecoveryCodeDTO): Promise<void> {
     /*Просим репозиторий "AuthRepository" найти данные о коде восстановления пароля пользователя по коду восстановления
     пароля пользователя в БД.*/
-    const passwordRecoveryCodeData: PasswordRecoveryCodeDataDocumentType | null =
+    const passwordRecoveryCodeData: PasswordRecoveryCodeDataDb | null =
       await this.authRepository.findRecoveryPasswordCodeDataByPasswordRecoveryCode(dto.recoveryCode);
 
     /*Если данные о коде восстановления пароля пользователя не были найдены, то выбрасываем исключение с информацией об
@@ -273,7 +241,7 @@ export class AuthService {
 
     /*Если срок действия кода восстановления пароля пользователя истек, то выбрасываем исключение с информацией об
     этом.*/
-    if (passwordRecoveryCodeData.expirationDate <= new Date())
+    if (passwordRecoveryCodeData.expiration_date <= new Date())
       throw new DomainException({
         code: DomainExceptionCode.ExpiredPasswordRecoveryCode,
         message: 'Password recovery code is expired',
@@ -281,9 +249,9 @@ export class AuthService {
       });
 
     /*Если данные о коде восстановления пароля пользователя были найдены, то получаем ID пользователя.*/
-    const userId: string = passwordRecoveryCodeData.userId;
+    const userId: string = passwordRecoveryCodeData.user_id;
     /*Просим репозиторий "UsersRepository" найти пользователя по ID в БД.*/
-    const user: UserDocumentType | null = await this.usersRepository.findById(userId);
+    const user: UserDb | null = await this.usersRepository.findById(userId);
 
     /*Если пользователь не был найден, то выбрасываем исключение с информацией об этом.*/
     if (!user)
@@ -295,10 +263,8 @@ export class AuthService {
 
     /*Если пользователь был найден, то просим адаптер "Argon2Adapter" сгенерировать хеш для пароля.*/
     const passwordHash: string = await this.argon2Adapter.generatePasswordHash(dto.password);
-    /*Изменяем хеш для пароля пользователя.*/
-    user.updateUserPasswordHash({ passwordHash });
-    /*Просим репозиторий "UsersRepository" сохранить измененного пользователя в БД.*/
-    await this.usersRepository.save(user);
+    /*Просим репозиторий "UsersRepository" изменить хеш для пароля пользователя по ID пользователя в БД.*/
+    await this.usersRepository.updateUserPasswordHashById(userId, passwordHash);
     /*Просим репозиторий "AuthRepository" удалить данные о всех кодах восстановления пароля пользователя ID пользователя
     в БД.*/
     await this.authRepository.deleteAllRecoveryCodesDataByUserId(userId);
@@ -312,7 +278,7 @@ export class AuthService {
     /*Получаем ID пользователя.*/
     const userId: string = userLocalAuthContext.id;
     /*Генерируем ID пользовательского устройства.*/
-    const deviceId: string = new Types.ObjectId().toString();
+    const deviceId: string = randomUUID();
     /*Получаем значение заголовка "user-agent".*/
     const userAgent: string = ipAndUserAgent.userAgent;
     /*Получаем IP-адрес пользователя.*/
@@ -344,21 +310,8 @@ export class AuthService {
     const refreshTokenIatDate: Date = new Date(refreshTokenIat * 1000);
     const refreshTokenExpDate: Date = new Date(refreshTokenExp * 1000);
 
-    /*Просим модель "SessionModel" создать пользовательскую сессию.*/
-    const session: SessionDocumentType = this.sessionModel.createInstance({
-      userId,
-      deviceId,
-      deviceName: userAgent,
-      ip,
-      iat: refreshTokenIatDate,
-      exp: refreshTokenExpDate,
-    });
-
-    /*Просим репозиторий "AuthRepository" сохранить пользовательскую сессию в БД.*/
-    await this.authRepository.saveSession(session);
-
-    /*Просим модель "SecurityDeviceModel" создать пользовательское устройство.*/
-    const securityDevice: SecurityDeviceDocumentType = this.securityDeviceModel.createInstance({
+    /*Просим репозиторий "SecurityDevicesRepository" создать пользовательское устройство в БД.*/
+    await this.securityDevicesRepository.create({
       deviceId,
       userId,
       title: userAgent,
@@ -366,8 +319,14 @@ export class AuthService {
       lastActiveDate: refreshTokenIatDate,
     });
 
-    /*Просим репозиторий "SecurityDevicesRepository" сохранить пользовательское устройство в БД.*/
-    await this.securityDevicesRepository.save(securityDevice);
+    /*Просим репозиторий "AuthRepository" создать сессию в БД.*/
+    await this.authRepository.createSession({
+      userId,
+      deviceId,
+      iat: refreshTokenIatDate,
+      exp: refreshTokenExpDate,
+    });
+
     /*Возвращаем AT.*/
     return { accessToken, refreshToken };
   }
@@ -412,28 +371,19 @@ export class AuthService {
     const refreshTokenIatDate: Date = new Date(refreshTokenIat * 1000);
     const refreshTokenExpDate: Date = new Date(refreshTokenExp * 1000);
 
-    /*Просим репозиторий "AuthRepository" найти пользовательскую сессию по ID пользователя, ID пользовательского
+    /*Просим репозиторий "AuthRepository" изменить пользовательскую сессию по ID пользователя, ID пользовательского
     устройства и дате выдачи RT в БД.*/
-    const session: SessionDocumentType | null = await this.authRepository.findSessionByUserIdAndDeviceIdAndIat(
-      userId,
-      deviceId,
-      userRefreshJwtAuthContext.iat
-    );
+    await this.authRepository.updateSessionByUserIdAndDeviceIdAndIat(userId, deviceId, userRefreshJwtAuthContext.iat, {
+      iat: refreshTokenIatDate,
+      exp: refreshTokenExpDate,
+    });
 
-    /*Изменяем пользовательскую сессию.*/
-    session!.update({ deviceName: userAgent, ip, iat: refreshTokenIatDate, exp: refreshTokenExpDate });
-    /*Просим репозиторий "AuthRepository" сохранить измененную пользовательскую сессию в БД.*/
-    await this.authRepository.saveSession(session!);
-
-    /*Просим репозиторий "SecurityDevicesRepository" найти пользовательское устройство по ID в БД.*/
-    const securityDevice: SecurityDeviceDocumentType | null = await this.securityDevicesRepository.findById(deviceId);
-
-    /*Если пользовательское устройство было найдено, то изменяем его.*/
-    if (securityDevice) {
-      securityDevice.update({ title: userAgent, ip, lastActiveDate: refreshTokenIatDate });
-      /*Просим репозиторий "SecurityDevicesRepository" сохранить измененное пользовательское устройство в БД.*/
-      await this.securityDevicesRepository.save(securityDevice);
-    }
+    /*Просим репозиторий "SecurityDevicesRepository" изменить пользовательское устройство по ID в БД.*/
+    await this.securityDevicesRepository.updateById(deviceId, {
+      title: userAgent,
+      ip,
+      lastActiveDate: refreshTokenIatDate,
+    });
 
     /*Возвращаем AT.*/
     return { accessToken, refreshToken };
@@ -462,9 +412,8 @@ export class AuthService {
   ): Promise<void> {
     /*Получаем ID пользователя.*/
     const userId: string = userRefreshJwtAuthContext.id;
-
     /*Просим репозиторий "SecurityDevicesRepository" найти пользовательское устройство по ID в БД.*/
-    const securityDevice: SecurityDeviceDocumentType | null = await this.securityDevicesRepository.findById(deviceId);
+    const securityDevice: SecurityDeviceDb | null = await this.securityDevicesRepository.findById(deviceId);
 
     /*Если пользовательское устройство не было найдено, то выбрасываем исключение с информацией об этом.*/
     if (!securityDevice)
@@ -476,7 +425,7 @@ export class AuthService {
 
     /*Если пользователь не является владельцем пользовательского устройства, то выбрасываем исключение с информацией об
     этом.*/
-    if (securityDevice.userId !== userId)
+    if (securityDevice.user_id !== userId)
       throw new DomainException({
         code: DomainExceptionCode.WrongSecurityDeviceOwnerWhileRevokingSessionBySecurityDeviceId,
         message: 'The user is not the owner of the security device to revoke a session',
@@ -511,14 +460,14 @@ export class AuthService {
     dto: ValidateUserLocalAuthCredentialsDTO
   ): Promise<UserLocalAuthContextDTO | null> {
     /*Просим репозиторий "UsersRepository" найти пользователя по логину или email в БД.*/
-    const user: UserDocumentType | null = await this.usersRepository.findByLoginOrEmail(dto.loginOrEmail);
+    const user: UserDb | null = await this.usersRepository.findByLoginOrEmail(dto.loginOrEmail);
     /*Если пользователь не был найден, то возвращаем null.*/
     if (!user) return null;
     /*Если у пользователя не была подтверждена регистрация, то возвращаем null.*/
-    if (!user.isConfirmed) return null;
+    if (!user.is_confirmed) return null;
     /*Если пользователь был найден и его регистрация подтверждена, то просим адаптер "Argon2Adapter" валидировать
     пароль.*/
-    const isPasswordValid: boolean = await this.argon2Adapter.checkPasswordByHash(dto.password, user.passwordHash);
+    const isPasswordValid: boolean = await this.argon2Adapter.checkPasswordByHash(dto.password, user.password_hash);
     /*Если пароль оказался невалидным, то возвращаем null.*/
     if (!isPasswordValid) return null;
     /*Если пароль оказался валидным, то возвращаем ID пользователя.*/
@@ -526,13 +475,13 @@ export class AuthService {
   }
 
   /*Метод для валидации payload из Access JWT.*/
-  public async validateAccessJwtPayload(dto: ValidateAccessJwtPayloadDTO): Promise<UserDocumentType | null> {
+  public async validateAccessJwtPayload(dto: ValidateAccessJwtPayloadDTO): Promise<UserDb | null> {
     /*Просим репозиторий "UsersRepository" найти пользователя по ID в БД.*/
     return await this.usersRepository.findById(dto.userId);
   }
 
   /*Метод для валидации payload из Refresh JWT.*/
-  public async validateRefreshJwtPayload(dto: ValidateRefreshJwtPayloadDTO): Promise<UserDocumentType | null> {
+  public async validateRefreshJwtPayload(dto: ValidateRefreshJwtPayloadDTO): Promise<UserDb | null> {
     /*Получаем ID пользователя.*/
     const userId: string = dto.userId;
     /*Получаем ID пользовательского устройства.*/
@@ -540,7 +489,7 @@ export class AuthService {
 
     /*Просим репозиторий "AuthRepository" найти пользовательскую сессию по ID пользователя, ID пользовательского
     устройства и дате выдачи RT в БД.*/
-    const session: SessionDocumentType | null = await this.authRepository.findSessionByUserIdAndDeviceIdAndIat(
+    const session: SessionDb | null = await this.authRepository.findSessionByUserIdAndDeviceIdAndIat(
       userId,
       deviceId,
       new Date(dto.iat * 1000)
@@ -550,7 +499,7 @@ export class AuthService {
     if (!session) return null;
     /*Если пользовательская сессия была найдена, то просим репозиторий "SecurityDevicesRepository" найти
     пользовательское устройство по ID в БД.*/
-    const securityDevice: SecurityDeviceDocumentType | null = await this.securityDevicesRepository.findById(deviceId);
+    const securityDevice: SecurityDeviceDb | null = await this.securityDevicesRepository.findById(deviceId);
     /*Если пользовательское устройство не было найдено, то возвращаем null.*/
     if (!securityDevice) return null;
     /*Если пользовательская сессия и пользовательское устройство были найдены, то просим репозиторий "UsersRepository"

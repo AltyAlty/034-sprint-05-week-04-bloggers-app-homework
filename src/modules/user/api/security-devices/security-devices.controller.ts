@@ -1,8 +1,8 @@
 import { Controller, Delete, Get, HttpCode, HttpStatus, Param, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { AuthPostgresqlService } from '../../application/auth/auth-postgresql.service';
-import { SecurityDevicesPostgresqlQueryService } from '../../application/security-devices/security-devices-postgresql.query-service';
-import { SecurityDeviceListOutputDTO } from './output-dto/security-device-list.output-dto';
+import { AuthService } from '../../application/auth/auth.service';
+import { SecurityDevicesQueryService } from '../../application/security-devices/security-devices.query-service';
+import { SecurityDeviceListOutputDTO } from './output-dto/security-device.output-dto';
 import { UserRefreshJwtAuthContextDTO } from '../../../../core/guards/refresh-jwt-auth/dto/user-refresh-jwt-auth-context.dto';
 import { RefreshJwtAuthGuard } from '../../../../core/guards/refresh-jwt-auth/refresh-jwt-auth.guard';
 import { SETTINGS } from '../../../../core/settings/settings';
@@ -14,8 +14,8 @@ import { ExtractUserDataFromRequest } from '../auth/decorators/param-extraction/
 @Controller(SETTINGS.SECURITY_DEVICES_PREFIX)
 export class SecurityDevicesController {
   public constructor(
-    private readonly authService: AuthPostgresqlService,
-    private readonly securityDevicesQueryService: SecurityDevicesPostgresqlQueryService
+    private readonly authService: AuthService,
+    private readonly securityDevicesQueryService: SecurityDevicesQueryService
   ) {}
 
   /*001. GET-запрос по получению пользовательских устройств.*/

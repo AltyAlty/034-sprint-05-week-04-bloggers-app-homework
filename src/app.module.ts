@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { APP_FILTER } from '@nestjs/core';
-import { MongooseModule } from '@nestjs/mongoose';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
@@ -17,16 +16,6 @@ import { TestingModule } from './testing/testing.module';
 @Module({
   imports: [
     configModule,
-    /*Используем динамический модуль, чтобы можно было использовать класс "CoreConfig" для работы с переменными
-    окружения.*/
-    MongooseModule.forRootAsync({
-      imports: [CoreModule],
-      inject: [CoreConfig],
-      useFactory: (coreConfig: CoreConfig): { uri: string; dbName: string } => ({
-        uri: coreConfig.MONGO_URI_LOCAL,
-        dbName: coreConfig.DB_NAME,
-      }),
-    }),
     TypeOrmModule.forRootAsync({
       imports: [CoreModule],
       inject: [CoreConfig],

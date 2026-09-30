@@ -1,17 +1,17 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { SecurityDeviceListDocumentType } from '../../domain/security-devices/document-types/security-device-list.document-type';
-import type { SecurityDeviceModelType } from '../../domain/security-devices/model-types/security-device.model-type';
-import { SecurityDevice } from '../../domain/security-devices/security-device.entity';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
+import { SecurityDeviceListDb } from './types/security-device-db.type';
 
-/*Query-репозиторий для пользовательских устройств.*/
+/*Query-репозиторий для пользователей.*/
 @Injectable()
 export class SecurityDevicesQueryRepository {
-  public constructor(@InjectModel(SecurityDevice.name) private readonly securityDeviceModel: SecurityDeviceModelType) {}
+  public constructor(@InjectDataSource() private readonly dataSource: DataSource) {}
 
   /*Метод для поиска пользовательских устройств по ID пользователя в БД.*/
-  public async findAllByUserId(userId: string): Promise<SecurityDeviceListDocumentType> {
-    /*Просим модель "SecurityDeviceModel" найти пользовательские устройства по ID пользователя в БД.*/
-    return await this.securityDeviceModel.find({ userId, deletedAt: null });
+  public async findAllByUserId(userId: string): Promise<SecurityDeviceListDb> {
+    return await this.dataSource.query(`SELECT * FROM security_devices WHERE user_id = $1 AND deleted_at IS NULL`, [
+      userId,
+    ]);
   }
 }

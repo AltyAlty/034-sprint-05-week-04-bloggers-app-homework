@@ -1,13 +1,12 @@
 import { Controller, Get, HttpCode, HttpStatus, Param, Query, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { BlogsPostgresqlQueryService } from '../../application/blogs/blogs-postgresql.query-service';
-import { PostsPostgresqlQueryService } from '../../application/posts/posts-postgresql.query-service';
+import { BlogsQueryService } from '../../application/blogs/blogs.query-service';
+import { PostsQueryService } from '../../application/posts/posts.query-service';
 import { GetBlogListQueryInputDTO } from './input-dto/query/get-blog-list-query.input-dto';
 import { GetPostListByBlogIdQueryInputDTO } from './input-dto/query/get-post-list-by-blog-id-query.input-dto';
 import { PaginationMetaDataOutputDTO } from '../../../../core/pagination/output-dto/pagination-meta-data.output-dto';
-import { PostListOutputDTO } from '../posts/output-dto/post-list.output-dto';
-import { BlogOutputDTO } from './output-dto/blog.output-dto';
-import { BlogListOutputDTO } from './output-dto/blog-list.output-dto';
+import { PostListOutputDTO } from '../posts/output-dto/post.output-dto';
+import { BlogListOutputDTO, BlogOutputDTO } from './output-dto/blog.output-dto';
 import { UserAccessJwtAuthContextDTO } from '../../../../core/guards/access-jwt-auth/dto/user-access-jwt-auth-context.dto';
 import { OptionalAccessJwtAuthGuard } from '../../../../core/guards/optional-access-jwt-auth/optional-access-jwt-auth.guard';
 import { SETTINGS } from '../../../../core/settings/settings';
@@ -19,8 +18,8 @@ import { ExtractUserDataFromRequest } from '../../../user/api/auth/decorators/pa
 @Controller(SETTINGS.BLOGS_PREFIX)
 export class BlogsController {
   public constructor(
-    private readonly blogsQueryService: BlogsPostgresqlQueryService,
-    private readonly postsQueryService: PostsPostgresqlQueryService
+    private readonly blogsQueryService: BlogsQueryService,
+    private readonly postsQueryService: PostsQueryService
   ) {}
 
   /*001. GET-запрос по поиску блога по ID, используя URI-параметры.*/

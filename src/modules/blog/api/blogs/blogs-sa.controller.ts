@@ -12,10 +12,10 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { BlogsPostgresqlService } from '../../application/blogs/blogs-postgresql.service';
-import { PostsPostgresqlService } from '../../application/posts/posts-postgresql.service';
-import { BlogsPostgresqlQueryService } from '../../application/blogs/blogs-postgresql.query-service';
-import { PostsPostgresqlQueryService } from '../../application/posts/posts-postgresql.query-service';
+import { BlogsService } from '../../application/blogs/blogs.service';
+import { PostsService } from '../../application/posts/posts.service';
+import { BlogsQueryService } from '../../application/blogs/blogs.query-service';
+import { PostsQueryService } from '../../application/posts/posts.query-service';
 import { CreateBlogInputDTO } from './input-dto/create-blog.input-dto';
 import { CreatePostForBlogInputDTO } from './input-dto/create-post-for-blog.input-dto';
 import { GetBlogListQueryInputDTO } from './input-dto/query/get-blog-list-query.input-dto';
@@ -23,10 +23,8 @@ import { GetPostListByBlogIdQueryInputDTO } from './input-dto/query/get-post-lis
 import { UpdateBlogByIdInputDTO } from './input-dto/update-blog-by-id.input-dto';
 import { UpdatePostByBlogIdAndPostIdInputDTO } from './input-dto/update-post-by-blog-id-and-post-id.input-dto';
 import { PaginationMetaDataOutputDTO } from '../../../../core/pagination/output-dto/pagination-meta-data.output-dto';
-import { PostOutputDTO } from '../posts/output-dto/post.output-dto';
-import { PostListOutputDTO } from '../posts/output-dto/post-list.output-dto';
-import { BlogOutputDTO } from './output-dto/blog.output-dto';
-import { BlogListOutputDTO } from './output-dto/blog-list.output-dto';
+import { PostListOutputDTO, PostOutputDTO } from '../posts/output-dto/post.output-dto';
+import { BlogListOutputDTO, BlogOutputDTO } from './output-dto/blog.output-dto';
 import { UserAccessJwtAuthContextDTO } from '../../../../core/guards/access-jwt-auth/dto/user-access-jwt-auth-context.dto';
 import { BasicAuthGuard } from '../../../../core/guards/basic-auth/basic-auth.guard';
 import { SETTINGS } from '../../../../core/settings/settings';
@@ -39,10 +37,10 @@ import { ExtractUserDataFromRequest } from '../../../user/api/auth/decorators/pa
 @Controller(SETTINGS.BLOGS_SA_REFIX)
 export class BlogsSAController {
   public constructor(
-    private readonly blogsService: BlogsPostgresqlService,
-    private readonly blogsQueryService: BlogsPostgresqlQueryService,
-    private readonly postsService: PostsPostgresqlService,
-    private readonly postsQueryService: PostsPostgresqlQueryService
+    private readonly blogsService: BlogsService,
+    private readonly blogsQueryService: BlogsQueryService,
+    private readonly postsService: PostsService,
+    private readonly postsQueryService: PostsQueryService
   ) {}
 
   /*001. POST-запрос по созданию блога.*/

@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Put, UseGuards } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import { CommentsPostgresqlService } from '../../application/comments/comments-postgresql.service';
-import { CommentsPostgresqlQueryService } from '../../application/comments/comments-postgresql.query-service';
+import { CommentsService } from '../../application/comments/comments.service';
+import { CommentsQueryService } from '../../application/comments/comments.query-service';
 import { UpdateCommentByIdInputDTO } from './input-dto/update-comment-by-id.input-dto';
 import { UpdateCommentLikeStatusByIdInputDTO } from './input-dto/update-comment-like-status-by-id.input-dto';
 import { CommentOutputDTO } from './output-dto/comment.output-dto';
@@ -17,8 +17,8 @@ import { ExtractUserDataFromRequest } from '../../../user/api/auth/decorators/pa
 @Controller(SETTINGS.COMMENTS_PREFIX)
 export class CommentsController {
   public constructor(
-    private readonly commentsService: CommentsPostgresqlService,
-    private readonly commentsQueryService: CommentsPostgresqlQueryService
+    private readonly commentsService: CommentsService,
+    private readonly commentsQueryService: CommentsQueryService
   ) {}
 
   /*001. GET-запрос по поиску комментария по ID, используя URI-параметры.*/

@@ -1,124 +1,191 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { QueryFilter } from 'mongoose';
+import { InjectDataSource } from '@nestjs/typeorm';
+import { DataSource } from 'typeorm';
+import { PostDb, PostListDb } from './types/post-db.type';
+import { PostLikeDataDb, PostLikeDataListDb } from './types/post-like-data-db.type';
+import { SortDirectionInputDTO } from '../../../../core/pagination/input-dto/sort-direction.input-dto';
 import { GetPostListQueryInputDTO } from '../../api/posts/input-dto/query/get-post-list-query.input-dto';
-import { NewestPostLikeListOutputDTO } from '../../api/posts/output-dto/newest-post-like-list.output-dto';
-import { PostDocumentType } from '../../domain/posts/document-types/post.document-type';
-import { PostLikeDataDocumentType } from '../../domain/posts/document-types/post-like-data.document-type';
-import { PostLikeDataListDocumentType } from '../../domain/posts/document-types/post-like-data-list.document-type';
-import { PostListDocumentType } from '../../domain/posts/document-types/post-list.document-type';
+import {
+  NewestPostLikeListOutputDTO,
+  NewestPostLikeOutputDTO,
+} from '../../api/posts/output-dto/newest-post-like.output-dto';
 import { PostLikeStatusDomainDTO } from '../../domain/posts/domain-dto/post-like-status.domain-dto';
-import type { PostModelType } from '../../domain/posts/model-types/post.model-type';
-import type { PostLikeDataModelType } from '../../domain/posts/model-types/post-like-data.model-type';
-import { Post } from '../../domain/posts/post.entity';
-import { PostLikeData } from '../../domain/posts/post-like-data.entity';
 
 /*Query-репозиторий для постов.*/
 @Injectable()
 export class PostsQueryRepository {
-  public constructor(
-    @InjectModel(Post.name) private readonly postModel: PostModelType,
-    @InjectModel(PostLikeData.name) private readonly postLikeDataModel: PostLikeDataModelType
-  ) {}
+  public constructor(@InjectDataSource() private readonly dataSource: DataSource) {}
 
   /*Метод для поиска поста по ID в БД.*/
-  public async findById(id: string): Promise<PostDocumentType | null> {
-    /*Просим модель "PostModel" найти пост по ID в БД.*/
-    return await this.postModel.findOne({ _id: id, deletedAt: null });
+  public async findById(id: string): Promise<PostDb | null> {
+    const result: PostListDb = await this.dataSource.query(
+      `
+      SELECT
+        p.id,
+        p.blog_id,
+        b.name AS blog_name,
+        p.title,
+        p.short_description,
+        p.content,
+        p.likes_count,
+        p.dislikes_count,
+        p.created_at,
+        p.deleted_at
+        FROM posts p
+      JOIN blogs b ON p.blog_id = b.id
+        WHERE p.id = $1 AND p.deleted_at IS NULL
+      `,
+      [id]
+    );
+
+    return result[0] ?? null;
   }
 
   /*Метод для поиска постов в БД.*/
   public async findAll(
     dto: GetPostListQueryInputDTO,
     blogId?: string
-  ): Promise<{ items: PostListDocumentType; totalCount: number }> {
+  ): Promise<{ items: PostListDb; totalCount: number }> {
     /*Переменная "skip" обозначает сколько записей надо пропустить перед тем, как начать отдавать запрошенную страницу
     "pageNumber".*/
     const skip: number = dto.calculateSkip();
-    /*Динамически собираем фильтр для поиска в MongoDB. Начинаем с пустого фильтра если используем hard удаление, либо с
-    "deletedAt: null", если используем soft удаление.*/
-    const filter: QueryFilter<PostDocumentType> = { deletedAt: null };
-    /*Если был указан ID блога, то добавляем его в фильтр.*/
-    if (blogId) filter.blogId = blogId;
 
-    /*Просим модель "PostModel" найти посты в БД и подсчитать общее количество документов, подходящих под фильтр, без
-    учета пагинации.*/
-    const [items, totalCount]: [PostListDocumentType, number] = await Promise.all([
-      this.postModel
-        .find(filter)
-        .sort({ [dto.sortBy]: dto.sortDirection })
-        .skip(skip)
-        .limit(dto.pageSize),
-      this.postModel.countDocuments(filter),
-    ]);
+    /*Создаем список допустимых полей для сортировки в целях защиты от SQL-инъекций, так как имена полей в клаузу
+    "ORDER BY" нельзя передавать параметрами через $1, поскольку СУБД считает параметры строго значениями данных.*/
+    const allowedSortFields: Record<string, string> = {
+      title: 'p.title',
+      shortDescription: 'p.short_description',
+      content: 'p.content',
+      blogId: 'p.blog_id',
+      blogName: 'b.name',
+      createdAt: 'p.created_at',
+    };
 
+    /*Создаем список полей, к которым разрешено применять модификатор "COLLATE", то есть только поля со строковыми
+    типами данных.*/
+    const collatableSortFields: Set<string> = new Set(['p.title', 'p.short_description', 'p.content', 'b.name']);
+    /*Если пришедшее значение "dto.sortBy" нет в ключах словаря, то выбирается безопасный вариант "created_at".*/
+    const sortField: string = allowedSortFields[dto.sortBy] ?? 'p.created_at';
+    /*Маппим направления сортировки в ключевые слова PostgreSQL.*/
+    const sortDirection: string = dto.sortDirection === SortDirectionInputDTO.Asc ? 'ASC' : 'DESC';
+    /*Формируем параметр для модификатора "COLLATE", чтобы для текстовых полей использовалась ASCII-сортировку, а для
+    дат - стандартная.*/
+    const collation: string = collatableSortFields.has(sortField) ? 'COLLATE "C"' : '';
+
+    /*Параллельно выполняем запрос данных и подсчет общего количества элементов.*/
+    const [items, countResult] = (await Promise.all([
+      this.dataSource.query(
+        `
+        SELECT
+          p.id,
+          p.blog_id,
+          b.name AS blog_name,
+          p.title,
+          p.short_description,
+          p.content,
+          p.likes_count,
+          p.dislikes_count,
+          p.created_at,
+          p.deleted_at
+          FROM posts p
+        JOIN blogs b ON b.id = p.blog_id
+          WHERE p.deleted_at IS NULL AND ($1::text IS NULL OR p.blog_id = $1::uuid)
+        ORDER BY ${sortField} ${collation} ${sortDirection}, p.id ASC
+        LIMIT $2 OFFSET $3
+        `,
+        [blogId ?? null, dto.pageSize, skip]
+      ),
+
+      this.dataSource.query(
+        `
+        SELECT COUNT(*) AS total
+            FROM posts p
+            WHERE p.deleted_at IS NULL AND ($1::text IS NULL OR p.blog_id = $1::uuid)
+        `,
+        [blogId ?? null]
+      ),
+    ])) as [PostListDb, { total: string }[]];
+
+    /*Агрегатная функция "COUNT(*)" возвращает строку, поэтому приводим к числу.*/
+    const totalCount: number = parseInt(countResult[0].total, 10);
     /*Возвращаем данные по постам.*/
     return { items, totalCount };
   }
 
   /*Метод для поиска данных о лайке поста по ID поста и ID пользователя в БД.*/
-  public async findPostLikeDataByPostIdAndUserId(
-    postId: string,
-    userId: string
-  ): Promise<PostLikeDataDocumentType | null> {
-    /*Просим модель "PostLikeDataModel" найти данные о лайке поста по ID поста и ID пользователя в БД.*/
-    return await this.postLikeDataModel.findOne({ postId, userId });
+  public async findPostLikeDataByPostIdAndUserId(postId: string, userId: string): Promise<PostLikeDataDb | null> {
+    const result: PostLikeDataListDb = await this.dataSource.query(
+      `SELECT * FROM post_likes_data WHERE post_id = $1 AND user_id = $2`,
+      [postId, userId]
+    );
+
+    return result[0] ?? null;
   }
 
   /*Метод для поиска данных о лайках постов по ID постов и ID пользователя в БД.*/
-  public async findAllPostLikesDataByPostIdsAndUserId(
-    postIds: string[],
-    userId: string
-  ): Promise<PostLikeDataListDocumentType> {
-    /*Просим модель "PostLikeDataModel" найти данные о лайках постов по ID постов и ID пользователя в БД.*/
-    return await this.postLikeDataModel.find({ postId: { $in: postIds }, userId });
+  public async findAllPostLikesDataByPostIdsAndUserId(postIds: string[], userId: string): Promise<PostLikeDataListDb> {
+    return await this.dataSource.query(`SELECT * FROM post_likes_data WHERE post_id = ANY($1) AND user_id = $2`, [
+      postIds,
+      userId,
+    ]);
   }
 
   /*Метод для поиска данных о трех последних лайках поста по ID поста в БД.*/
   public async findLastThreePostLikes(postId: string): Promise<NewestPostLikeListOutputDTO> {
-    /*Просим модель "PostLikeDataModel" найти данные о трех последних лайках поста по ID поста в БД.*/
-    return await this.postLikeDataModel
-      .find(
-        { postId, likeStatus: PostLikeStatusDomainDTO.Like },
-        /*Указываем какие поля включать в результат.*/
-        { addedAt: 1, userId: 1, login: 1, _id: 0 }
-      )
-      /*Сортируем найденные данные о лайках поста по полю "addedAt" в порядке убывания.*/
-      .sort({ addedAt: -1 })
-      /*Ограничиваем количество возвращаемых данных о лайках поста до трех.*/
-      .limit(3)
-      .lean();
+    const result: PostLikeDataListDb = await this.dataSource.query(
+      `
+      SELECT pld.user_id, u.login, pld.added_at
+        FROM post_likes_data pld
+      JOIN users u ON u.id = pld.user_id
+        WHERE pld.post_id = $1 AND pld.like_status = $2
+      ORDER BY pld.added_at DESC
+      LIMIT 3
+    `,
+      [postId, PostLikeStatusDomainDTO.Like]
+    );
+
+    return result.map((like: PostLikeDataDb): NewestPostLikeOutputDTO => ({
+      addedAt: like.added_at,
+      userId: like.user_id,
+      login: like.login,
+    }));
   }
 
   /*Метод для поиска данных о трех последних лайках постов по ID постов в БД.*/
   public async findLastThreeLikesForPostsByPostIds(
     postIds: string[]
   ): Promise<Map<string, NewestPostLikeListOutputDTO>> {
-    /*Выполняем агрегационный конвейер MongoDB. Плюсы использования агрегационного конвейера здесь:
-    1. Работа с документами происходит внутри MongoDB, без загрузки всех документов в память приложения.
-    2. БД возвращает только нужные трое данных о лайках на пост (или меньше), а не все данные о лайках для всех
-    запрошенных постов.
-    3. При миллионе лайков у поста из БД будет браться только три документа на пост, а не миллион.*/
-    const aggregationResult = await this.postLikeDataModel.aggregate<{
-      _id: string;
-      likes: NewestPostLikeListOutputDTO;
-    }>([
-      /*Берем только те данные о лайках постов, у которых ID поста входит в переданный массив ID постов и статус лайка
-      установлен как "Like".*/
-      { $match: { postId: { $in: postIds }, likeStatus: PostLikeStatusDomainDTO.Like } },
-      /*Сортируем найденные данные о лайках постов по полю "addedAt" в порядке убывания.*/
-      { $sort: { addedAt: -1 } },
-      /*Создаем отдельные группы данных о лайках поста для каждого уникального ID поста. В поле "likes" собираем только
-      нужные поля для типа "NewestPostLikeOutputDTO".*/
-      { $group: { _id: '$postId', likes: { $push: { addedAt: '$addedAt', userId: '$userId', login: '$login' } } } },
-      /*Делаем проекцию, то есть определяем структуру выходных документов. Обрезаем массив "likes" до первых трех
-      элементов.*/
-      { $project: { likes: { $slice: ['$likes', 3] } } },
-    ]);
+    /*Если массив ID постов пустой, то возвращаем пустой Map.*/
+    if (postIds.length === 0) return new Map();
 
-    /*Преобразовываем результат агрегации в Map в формате "postId: NewestPostLikeListOutputDTO".*/
+    /*Используем оконную функцию "ROW_NUMBER()" для нумерации лайков внутри каждого поста в порядке убывания по дате.
+    Затем берем только первые три лайка для каждого поста.*/
+    const result: (PostLikeDataDb & { post_id: string })[] = await this.dataSource.query(
+      `
+      SELECT post_id, user_id, login, added_at
+        FROM (
+          SELECT pld.post_id, pld.user_id, u.login, pld.added_at,
+            ROW_NUMBER() OVER (PARTITION BY pld.post_id ORDER BY pld.added_at DESC) AS rn
+            FROM post_likes_data pld
+          JOIN users u ON u.id = pld.user_id
+            WHERE pld.post_id = ANY($1) AND pld.like_status = $2
+        ) subquery
+        WHERE rn <= 3
+    `,
+      [postIds, PostLikeStatusDomainDTO.Like]
+    );
+
+    /*Создаем Map формата "postId: NewestPostLikeListOutputDTO" для группировки результата.*/
     const map: Map<string, NewestPostLikeListOutputDTO> = new Map<string, NewestPostLikeListOutputDTO>();
-    for (const item of aggregationResult) map.set(item._id, item.likes);
+
+    /*Перебираем каждый лайк из результата.*/
+    for (const like of result) {
+      /*Если в Map еще нет записи для какого-то поста, то создаем пустой массив лайков для него.*/
+      if (!map.has(like.post_id)) map.set(like.post_id, []);
+      /*Добавляем текущий лайк в массив лайков соответствующего поста.*/
+      map.get(like.post_id)!.push({ addedAt: like.added_at, userId: like.user_id, login: like.login });
+    }
+
     /*Возвращаем данные о трех последних лайках постов.*/
     return map;
   }

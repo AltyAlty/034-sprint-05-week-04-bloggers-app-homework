@@ -1,35 +1,25 @@
 import { Injectable } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
 import { Argon2Adapter } from '../../../../core/security/cryptography/argon2.adapter';
+import { CommentsRepository } from '../../../blog/infrastructure/comments/comments.repository';
 import { UsersRepository } from '../../infrastructure/users/users.repository';
+import { UserDb } from '../../infrastructure/users/types/user-db.type';
 import { UserOutputDTO } from '../../api/users/output-dto/user.output-dto';
 import { DomainException, DomainExceptionCode } from '../../../../core/exceptions/domain/domain.exception';
-import { Comment } from '../../../blog/domain/comments/comment.entity';
-import { CommentLikeData } from '../../../blog/domain/comments/comment-like-data.entity';
-import type { CommentModelType } from '../../../blog/domain/comments/model-types/comment.model-type';
-import type { CommentLikeDataModelType } from '../../../blog/domain/comments/model-types/comment-like-data.model-type';
-import { UserDocumentType } from '../../domain/users/document-types/user.document-type';
-import type { UserModelType } from '../../domain/users/model-types/user.model-type';
-import { User } from '../../domain/users/user.entity';
 import { CreateUserDTO } from './dto/create-user.dto';
 
 /*Сервис для пользователей.*/
 @Injectable()
 export class UsersService {
   public constructor(
-    @InjectModel(User.name)
-    private readonly userModel: UserModelType,
-    @InjectModel(Comment.name)
-    private readonly commentModel: CommentModelType,
-    @InjectModel(CommentLikeData.name) private readonly commentLikeDataModel: CommentLikeDataModelType,
     private readonly argon2Adapter: Argon2Adapter,
-    private readonly usersRepository: UsersRepository
+    private readonly usersRepository: UsersRepository,
+    private readonly commentsRepository: CommentsRepository
   ) {}
 
   /*Метод для создания пользователя.*/
   public async create(dto: CreateUserDTO): Promise<string> {
     /*Просим репозиторий "UsersRepository" найти пользователя по логину в БД.*/
-    let user: UserDocumentType | null = await this.usersRepository.findByLogin(dto.login);
+    let user: UserDb | null = await this.usersRepository.findByLogin(dto.login);
 
     /*Если пользователь был найден, то выбрасываем исключение с информацией об этом.*/
     if (user)
@@ -52,18 +42,14 @@ export class UsersService {
 
     /*Если пользователь еще не был создан, то просим адаптер "Argon2Adapter" сгенерировать хеш для пароля.*/
     const passwordHash: string = await this.argon2Adapter.generatePasswordHash(dto.password);
-    /*Просим модель "UserModel" создать пользователя.*/
-    user = this.userModel.createInstance({ login: dto.login, email: dto.email, passwordHash });
-    /*Просим репозиторий "UsersRepository" сохранить пользователя в БД.*/
-    await this.usersRepository.save(user);
-    /*Возвращаем ID созданного пользователя.*/
-    return user.id;
+    /*Просим репозиторий "UsersRepository" создать пользователя в БД.*/
+    return await this.usersRepository.create({ login: dto.login, email: dto.email, passwordHash });
   }
 
   /*Метод для создания подтвержденного пользователя.*/
   public async createConfirmedUser(dto: CreateUserDTO): Promise<UserOutputDTO> {
     /*Просим репозиторий "UsersRepository" найти пользователя по логину в БД.*/
-    let user: UserDocumentType | null = await this.usersRepository.findByLogin(dto.login);
+    let user: UserDb | null = await this.usersRepository.findByLogin(dto.login);
 
     /*Если пользователь был найден, то выбрасываем исключение с информацией об этом.*/
     if (user)
@@ -86,19 +72,22 @@ export class UsersService {
 
     /*Если пользователь еще не был создан, то просим адаптер "Argon2Adapter" сгенерировать хеш для пароля.*/
     const passwordHash: string = await this.argon2Adapter.generatePasswordHash(dto.password);
-    /*Просим модель "UserModel" создать подтвержденного пользователя.*/
-    user = this.userModel.createInstance({ login: dto.login, email: dto.email, passwordHash }, true);
-    /*Просим репозиторий "UsersRepository" сохранить пользователя в БД.*/
-    await this.usersRepository.save(user);
-    /*Преобразовываем пользователя из БД в подготовленного для отправки клиенту
-    пользователя и возвращаем его.*/
-    return UserOutputDTO.mapFromUserDocumentTypeToUserOutputDTO(user);
+
+    /*Просим репозиторий "UsersRepository" создать подтвержденного пользователя в БД.*/
+    const createdUser: UserDb = await this.usersRepository.createConfirmed({
+      login: dto.login,
+      email: dto.email,
+      passwordHash,
+    });
+
+    /*Преобразовываем пользователя из БД в подготовленного для отправки клиенту пользователя и возвращаем его.*/
+    return UserOutputDTO.mapFromUserDbToUserOutputDTO(createdUser);
   }
 
   /*Метод для soft удаления пользователя по ID.*/
   public async markAsDeletedById(id: string): Promise<void> {
     /*Просим репозиторий "UsersRepository" найти пользователя по ID в БД.*/
-    const user: UserDocumentType | null = await this.usersRepository.findById(id);
+    const user: UserDb | null = await this.usersRepository.findById(id);
 
     /*Если пользователь не был найден, то выбрасываем исключение с информацией об этом.*/
     if (!user)
@@ -108,16 +97,14 @@ export class UsersService {
         field: 'code',
       });
 
-    /*Если пользователь был найден, то помечаем его как удаленный.*/
-    user.markAsDeleted();
-    /*Просим репозиторий "UsersRepository" сохранить удаленного пользователя в БД.*/
-    await this.usersRepository.save(user);
+    /*Если пользователь был найден, то просим репозиторий "UsersRepository" пометить его как удаленный в БД.*/
+    await this.usersRepository.markAsDeletedById(id);
   }
 
   /*Метод для hard удаления пользователя по ID.*/
   public async deleteById(id: string): Promise<void> {
     /*Просим репозиторий "UsersRepository" найти пользователя по ID в БД.*/
-    const user: UserDocumentType | null = await this.usersRepository.findById(id);
+    const user: UserDb | null = await this.usersRepository.findById(id);
 
     /*Если пользователь не был найден, то выбрасываем исключение с информацией об этом.*/
     if (!user)
@@ -129,9 +116,9 @@ export class UsersService {
 
     /*Если пользователь был найден, то просим репозиторий "UsersRepository" удалить пользователя по ID в БД.*/
     await this.usersRepository.deleteById(id);
-    /*Просим модель "CommentModel" удалить данные о лайках комментариев по ID пользователя в БД.*/
-    await this.commentLikeDataModel.deleteMany({ userId: id });
-    /*Просим модель "CommentModel" удалить комментарии по ID пользователя в БД.*/
-    await this.commentModel.deleteMany({ 'commentatorInfo.userId': id });
+    /*Просим репозиторий "CommentsRepository" удалить данные о лайках комментариев по ID пользователя в БД.*/
+    await this.commentsRepository.deleteAllCommentLikeDataByUserId(id);
+    /*Просим репозиторий "CommentsRepository" удалить комментарии по ID пользователя в БД.*/
+    await this.commentsRepository.deleteAllByUserId(id);
   }
 }

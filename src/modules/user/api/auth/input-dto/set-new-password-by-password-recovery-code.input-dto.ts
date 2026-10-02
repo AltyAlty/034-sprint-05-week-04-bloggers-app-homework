@@ -14,7 +14,7 @@ export class SetNewPasswordByPasswordRecoveryCodeInputDTO {
   @Trim()
   public password: string;
 
-  @ApiProperty({ example: '60d5ec386f6e5a1b3c9d4e2a', description: 'Password recovery code' })
+  @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000', description: 'Password recovery code' })
   @Matches(USER_VALIDATION_CONSTRAINTS.PASSWORD_RECOVERY_CODE.MATCHES, { message: 'Field "$property" is invalid' })
   @IsNotEmpty({ message: 'Field "$property" must not be empty' })
   @IsString({ message: 'Field "$property" must be a string' })

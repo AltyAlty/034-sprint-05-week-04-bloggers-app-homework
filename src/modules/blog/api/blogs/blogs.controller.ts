@@ -48,7 +48,7 @@ export class BlogsController {
   @Get(SETTINGS.BLOGS_GET_POST_LIST_BY_BLOG_ID_PATH)
   @HttpCode(HttpStatus.OK)
   public async getPostListByBlogId(
-    @Param('blogId') id: string,
+    @Param('id') id: string,
     @Query() query: GetPostListByBlogIdQueryInputDTO,
     @ExtractUserDataFromRequest() userAccessJwtAuthContext: UserAccessJwtAuthContextDTO | null
   ): Promise<PaginationMetaDataOutputDTO<PostListOutputDTO>> {

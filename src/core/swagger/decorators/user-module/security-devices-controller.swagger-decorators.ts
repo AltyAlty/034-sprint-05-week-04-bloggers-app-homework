@@ -1,6 +1,5 @@
 import { applyDecorators } from '@nestjs/common';
 import {
-  ApiCookieAuth,
   ApiForbiddenResponse,
   ApiNoContentResponse,
   ApiNotFoundResponse,
@@ -23,8 +22,7 @@ export const SecurityDevicesControllerSwaggerDecorators = {
       ApiUnauthorizedResponse({
         description: 'The refresh JWT is invalid, incorrect or expired',
         type: ErrorsMessagesSwaggerType,
-      }),
-      ApiCookieAuth('refreshToken')
+      })
     );
   },
 
@@ -38,8 +36,7 @@ export const SecurityDevicesControllerSwaggerDecorators = {
       }),
       ApiForbiddenResponse({ description: 'The user is not the owner of the device', type: ErrorsMessagesSwaggerType }),
       ApiNotFoundResponse({ description: 'The device does not exist', type: ErrorsMessagesSwaggerType }),
-      ApiCookieAuth('refreshToken'),
-      ApiParam({ name: 'id', description: 'User device ID', format: 'ObjectId' })
+      ApiParam({ name: 'id', description: 'User device ID', format: 'uuid' })
     );
   },
 
@@ -50,8 +47,7 @@ export const SecurityDevicesControllerSwaggerDecorators = {
       ApiUnauthorizedResponse({
         description: 'The refresh JWT is invalid, incorrect or expired',
         type: ErrorsMessagesSwaggerType,
-      }),
-      ApiCookieAuth('refreshToken')
+      })
     );
   },
 };

@@ -19,8 +19,7 @@ export const CommentsControllerSwaggerDecorators = {
       ApiOperation({ summary: 'Get a comment by ID. Bearer auth is optional to get personalized like status' }),
       ApiOkResponse({ description: 'Returns the comment', type: CommentOutputDTO }),
       ApiNotFoundResponse({ description: 'The comment does not exist', type: ErrorsMessagesSwaggerType }),
-      ApiBearerAuth(),
-      ApiParam({ name: 'id', description: 'Comment ID', format: 'ObjectId' })
+      ApiParam({ name: 'id', description: 'Comment ID', format: 'uuid' })
     );
   },
 
@@ -38,8 +37,7 @@ export const CommentsControllerSwaggerDecorators = {
         description: 'The Access JWT is invalid or the user does not exist',
         type: ErrorsMessagesSwaggerType,
       }),
-      ApiBearerAuth(),
-      ApiParam({ name: 'id', description: 'Comment ID', format: 'ObjectId' })
+      ApiParam({ name: 'id', description: 'Comment ID', format: 'uuid' })
     );
   },
 
@@ -53,8 +51,7 @@ export const CommentsControllerSwaggerDecorators = {
         description: 'The Access JWT is invalid or the user does not exist',
         type: ErrorsMessagesSwaggerType,
       }),
-      ApiBearerAuth(),
-      ApiParam({ name: 'id', description: 'Comment ID', format: 'ObjectId' })
+      ApiParam({ name: 'id', description: 'Comment ID', format: 'uuid' })
     );
   },
 
@@ -71,8 +68,7 @@ export const CommentsControllerSwaggerDecorators = {
         description: 'The Access JWT is invalid or the user does not exist',
         type: ErrorsMessagesSwaggerType,
       }),
-      ApiBearerAuth(),
-      ApiParam({ name: 'id', description: 'Comment ID', format: 'ObjectId' })
+      ApiParam({ name: 'id', description: 'Comment ID', format: 'uuid' })
     );
   },
 };

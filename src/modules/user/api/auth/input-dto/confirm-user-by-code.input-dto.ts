@@ -5,7 +5,7 @@ import { USER_VALIDATION_CONSTRAINTS } from '../../../../../core/validation/cons
 
 /*Валидационный Input DTO для подтверждения регистрации пользователя по коду.*/
 export class ConfirmUserByCodeInputDTO {
-  @ApiProperty({ example: '60d5ec386f6e5a1b3c9d4e2a', description: 'Confirmation code' })
+  @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000', description: 'Confirmation code' })
   @Matches(USER_VALIDATION_CONSTRAINTS.CONFIRMATION_REGISTRATION_CODE.MATCHES, {
     message: 'Field "$property" is invalid',
   })

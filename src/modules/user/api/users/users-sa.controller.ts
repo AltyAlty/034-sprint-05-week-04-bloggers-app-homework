@@ -8,21 +8,21 @@ import { PaginationMetaDataOutputDTO } from '../../../../core/pagination/output-
 import { UserListOutputDTO, UserOutputDTO } from './output-dto/user.output-dto';
 import { BasicAuthGuard } from '../../../../core/guards/basic-auth/basic-auth.guard';
 import { SETTINGS } from '../../../../core/settings/settings';
-import { UsersControllerSwaggerDecorators } from '../../../../core/swagger/decorators/user-module/users-controller.swagger-decorators';
+import { UsersSaControllerSwaggerDecorators } from '../../../../core/swagger/decorators/user-module/users-sa-controller.swagger-decorators';
 
 /*SA-контроллер для пользователей.*/
 @ApiTags(SETTINGS.USERS_SA_API_TAG)
 @ApiBasicAuth()
 @UseGuards(BasicAuthGuard)
 @Controller(SETTINGS.USERS_SA_PREFIX)
-export class UsersSAController {
+export class UsersSaController {
   public constructor(
     private readonly usersService: UsersService,
     private readonly usersQueryService: UsersQueryService
   ) {}
 
   /*001. POST-запрос по созданию пользователя.*/
-  @UsersControllerSwaggerDecorators.createUser
+  @UsersSaControllerSwaggerDecorators.createUser
   @Post(SETTINGS.USERS_SA_CREATE_USER_PATH)
   @HttpCode(HttpStatus.CREATED)
   public async createUser(@Body() body: CreateUserInputDTO): Promise<UserOutputDTO> {
@@ -31,7 +31,7 @@ export class UsersSAController {
   }
 
   /*002. GET-запрос по поиску пользователей с пагинацией, используя query-параметры.*/
-  @UsersControllerSwaggerDecorators.getUserList
+  @UsersSaControllerSwaggerDecorators.getUserList
   @Get(SETTINGS.USERS_SA_GET_USER_LIST_PATH)
   @HttpCode(HttpStatus.OK)
   public async getUserList(
@@ -42,7 +42,7 @@ export class UsersSAController {
   }
 
   /*003. DELETE-запрос по удалению пользователя по ID, используя URI-параметры.*/
-  @UsersControllerSwaggerDecorators.deleteUserById
+  @UsersSaControllerSwaggerDecorators.deleteUserById
   @Delete(SETTINGS.USERS_SA_DELETE_USER_BY_ID_PATH)
   @HttpCode(HttpStatus.NO_CONTENT)
   public async deleteUserById(@Param('id') id: string): Promise<void> {

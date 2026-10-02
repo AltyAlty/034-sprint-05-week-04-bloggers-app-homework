@@ -1,5 +1,5 @@
 import { Controller, Delete, Get, HttpCode, HttpStatus, Param, UseGuards } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiCookieAuth, ApiTags } from '@nestjs/swagger';
 import { AuthService } from '../../application/auth/auth.service';
 import { SecurityDevicesQueryService } from '../../application/security-devices/security-devices.query-service';
 import { SecurityDeviceListOutputDTO } from './output-dto/security-device.output-dto';
@@ -11,6 +11,8 @@ import { ExtractUserDataFromRequest } from '../auth/decorators/param-extraction/
 
 /*Контроллер для пользовательских устройств.*/
 @ApiTags(SETTINGS.SECURITY_DEVICES_API_TAG)
+@ApiCookieAuth('refreshToken')
+@UseGuards(RefreshJwtAuthGuard)
 @Controller(SETTINGS.SECURITY_DEVICES_PREFIX)
 export class SecurityDevicesController {
   public constructor(
@@ -20,7 +22,6 @@ export class SecurityDevicesController {
 
   /*001. GET-запрос по получению пользовательских устройств.*/
   @SecurityDevicesControllerSwaggerDecorators.getSecurityDeviceList
-  @UseGuards(RefreshJwtAuthGuard)
   @Get(SETTINGS.SECURITY_DEVICES_GET_SECURITY_DEVICE_LIST_PATH)
   @HttpCode(HttpStatus.OK)
   public getSecurityDeviceList(
@@ -32,7 +33,6 @@ export class SecurityDevicesController {
 
   /*002. DELETE-запрос по отзыву пользовательской сессии по ID пользовательского устройства, используя URI-параметры.*/
   @SecurityDevicesControllerSwaggerDecorators.revokeSessionBySecurityDeviceId
-  @UseGuards(RefreshJwtAuthGuard)
   @Delete(SETTINGS.SECURITY_DEVICES_REVOKE_SESSION_BY_DEVICE_ID_PATH)
   @HttpCode(HttpStatus.NO_CONTENT)
   public async revokeSessionBySecurityDeviceId(
@@ -45,7 +45,6 @@ export class SecurityDevicesController {
 
   /*003. DELETE-запрос по отзыву всех пользовательских сессий, кроме текущей.*/
   @SecurityDevicesControllerSwaggerDecorators.revokeAllSessionsExceptCurrentOne
-  @UseGuards(RefreshJwtAuthGuard)
   @Delete(SETTINGS.SECURITY_DEVICES_REVOKE_ALL_SESSIONS_EXCEPT_CURRENT_ONE_PATH)
   @HttpCode(HttpStatus.NO_CONTENT)
   public async revokeAllSessionsExceptCurrentOne(

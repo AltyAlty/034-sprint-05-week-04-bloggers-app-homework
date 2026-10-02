@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { PassportModule } from '@nestjs/passport';
 import { BlogsController } from './api/blogs/blogs.controller';
-import { BlogsSAController } from './api/blogs/blogs-sa.controller';
+import { BlogsSaController } from './api/blogs/blogs-sa.controller';
 import { CommentsController } from './api/comments/comments.controller';
 import { PostsController } from './api/posts/posts.controller';
 import { BlogsService } from './application/blogs/blogs.service';
@@ -21,7 +21,7 @@ import { BlogsQueryRepository } from './infrastructure/blogs/blogs.query-reposit
 /*Модуль для блогов, постов и комментариев.*/
 @Module({
   imports: [PassportModule.register({ defaultStrategy: 'access-jwt' }), UserModule],
-  controllers: [BlogsController, BlogsSAController, PostsController, CommentsController],
+  controllers: [BlogsController, BlogsSaController, PostsController, CommentsController],
   providers: [
     BlogsService,
     PostsService,

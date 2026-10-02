@@ -1,8 +1,6 @@
 import { applyDecorators } from '@nestjs/common';
 import {
   ApiBadRequestResponse,
-  ApiBasicAuth,
-  ApiBearerAuth,
   ApiCreatedResponse,
   ApiNoContentResponse,
   ApiNotFoundResponse,
@@ -18,21 +16,7 @@ import { PaginatedCommentListSwaggerOutputDTO } from './swagger-output-dto/pagin
 import { PaginatedPostListSwaggerOutputDTO } from './swagger-output-dto/paginated-post-list.swagger-output-dto';
 
 export const PostsControllerSwaggerDecorators = {
-  get createPost() {
-    return applyDecorators(
-      ApiOperation({ summary: 'Create a post' }),
-      ApiCreatedResponse({ description: 'Returns the created post', type: PostOutputDTO }),
-      ApiBadRequestResponse({ description: 'The input data is invalid', type: ErrorsMessagesSwaggerType }),
-      ApiNotFoundResponse({ description: 'The blog does not exist', type: ErrorsMessagesSwaggerType }),
-      ApiUnauthorizedResponse({
-        description: 'Wrong authorization type or the basic auth credentials are incorrect',
-        type: ErrorsMessagesSwaggerType,
-      }),
-      ApiBasicAuth()
-    );
-  },
-
-  get createCommentForPost() {
+  get createCommentForPostByPostId() {
     return applyDecorators(
       ApiOperation({ summary: 'Create a comment for a post' }),
       ApiCreatedResponse({ description: 'Returns the created comment', type: CommentOutputDTO }),
@@ -42,7 +26,7 @@ export const PostsControllerSwaggerDecorators = {
         description: 'The Access JWT is invalid or the user does not exist',
         type: ErrorsMessagesSwaggerType,
       }),
-      ApiBearerAuth()
+      ApiParam({ name: 'id', description: 'Post ID', format: 'uuid' })
     );
   },
 
@@ -51,8 +35,7 @@ export const PostsControllerSwaggerDecorators = {
       ApiOperation({ summary: 'Get a post by ID. Bearer auth is optional to get personalized like status' }),
       ApiOkResponse({ description: 'Returns the post', type: PostOutputDTO }),
       ApiNotFoundResponse({ description: 'The post does not exist', type: ErrorsMessagesSwaggerType }),
-      ApiBearerAuth(),
-      ApiParam({ name: 'id', description: 'Post ID', format: 'ObjectId' })
+      ApiParam({ name: 'id', description: 'Post ID', format: 'uuid' })
     );
   },
 
@@ -61,9 +44,7 @@ export const PostsControllerSwaggerDecorators = {
       ApiOperation({
         summary: 'Get a paginated list of posts. Bearer auth is optional to get personalized like statuses',
       }),
-      ApiOkResponse({ description: 'Returns a paginated list of posts', type: PaginatedPostListSwaggerOutputDTO }),
-      ApiNotFoundResponse({ description: 'The blog does not exist', type: ErrorsMessagesSwaggerType }),
-      ApiBearerAuth()
+      ApiOkResponse({ description: 'Returns a paginated list of posts', type: PaginatedPostListSwaggerOutputDTO })
     );
   },
 
@@ -78,23 +59,7 @@ export const PostsControllerSwaggerDecorators = {
         type: PaginatedCommentListSwaggerOutputDTO,
       }),
       ApiNotFoundResponse({ description: 'The post does not exist', type: ErrorsMessagesSwaggerType }),
-      ApiBearerAuth(),
-      ApiParam({ name: 'postId', description: 'Post ID', format: 'ObjectId' })
-    );
-  },
-
-  get updatePostById() {
-    return applyDecorators(
-      ApiOperation({ summary: 'Update a post by ID' }),
-      ApiNoContentResponse({ description: 'Updates the post' }),
-      ApiBadRequestResponse({ description: 'The input data is invalid', type: ErrorsMessagesSwaggerType }),
-      ApiNotFoundResponse({ description: 'The post does not exist', type: ErrorsMessagesSwaggerType }),
-      ApiUnauthorizedResponse({
-        description: 'Wrong authorization type or the basic auth credentials are incorrect',
-        type: ErrorsMessagesSwaggerType,
-      }),
-      ApiBasicAuth(),
-      ApiParam({ name: 'id', description: 'Post ID', format: 'ObjectId' })
+      ApiParam({ name: 'id', description: 'Post ID', format: 'uuid' })
     );
   },
 
@@ -108,22 +73,7 @@ export const PostsControllerSwaggerDecorators = {
         description: 'The Access JWT is invalid or the user does not exist',
         type: ErrorsMessagesSwaggerType,
       }),
-      ApiBearerAuth(),
-      ApiParam({ name: 'id', description: 'Post ID', format: 'ObjectId' })
-    );
-  },
-
-  get deletePostById() {
-    return applyDecorators(
-      ApiOperation({ summary: 'Delete a post by ID' }),
-      ApiNoContentResponse({ description: 'Deletes the post' }),
-      ApiNotFoundResponse({ description: 'The post does not exist', type: ErrorsMessagesSwaggerType }),
-      ApiUnauthorizedResponse({
-        description: 'Wrong authorization type or the basic auth credentials are incorrect',
-        type: ErrorsMessagesSwaggerType,
-      }),
-      ApiParam({ name: 'id', description: 'Post ID', format: 'ObjectId' }),
-      ApiBasicAuth()
+      ApiParam({ name: 'id', description: 'Post ID', format: 'uuid' })
     );
   },
 };

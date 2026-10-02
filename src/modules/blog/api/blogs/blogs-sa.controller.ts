@@ -11,7 +11,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBasicAuth, ApiTags } from '@nestjs/swagger';
 import { BlogsService } from '../../application/blogs/blogs.service';
 import { PostsService } from '../../application/posts/posts.service';
 import { BlogsQueryService } from '../../application/blogs/blogs.query-service';
@@ -28,14 +28,15 @@ import { BlogListOutputDTO, BlogOutputDTO } from './output-dto/blog.output-dto';
 import { UserAccessJwtAuthContextDTO } from '../../../../core/guards/access-jwt-auth/dto/user-access-jwt-auth-context.dto';
 import { BasicAuthGuard } from '../../../../core/guards/basic-auth/basic-auth.guard';
 import { SETTINGS } from '../../../../core/settings/settings';
-import { BlogsControllerSwaggerDecorators } from '../../../../core/swagger/decorators/blog-module/blogs-controller.swagger-decorators';
-import { PostsControllerSwaggerDecorators } from '../../../../core/swagger/decorators/blog-module/posts-controller.swagger-decorators';
+import { BlogsSaControllerSwaggerDecorators } from '../../../../core/swagger/decorators/blog-module/blogs-sa-controller.swagger-decorators';
 import { ExtractUserDataFromRequest } from '../../../user/api/auth/decorators/param-extraction/extract-user-data-from-request.param-decorator';
 
 /*SA-контроллер для блогов.*/
-@ApiTags(SETTINGS.BLOGS_API_TAG)
+@ApiTags(SETTINGS.BLOGS_SA_API_TAG)
+@ApiBasicAuth()
+@UseGuards(BasicAuthGuard)
 @Controller(SETTINGS.BLOGS_SA_REFIX)
-export class BlogsSAController {
+export class BlogsSaController {
   public constructor(
     private readonly blogsService: BlogsService,
     private readonly blogsQueryService: BlogsQueryService,
@@ -44,7 +45,7 @@ export class BlogsSAController {
   ) {}
 
   /*001. POST-запрос по созданию блога.*/
-  @BlogsControllerSwaggerDecorators.createBlog
+  @BlogsSaControllerSwaggerDecorators.createBlog
   @UseGuards(BasicAuthGuard)
   @Post(SETTINGS.BLOGS_SA_CREATE_BLOG_PATH)
   @HttpCode(HttpStatus.CREATED)
@@ -54,12 +55,12 @@ export class BlogsSAController {
   }
 
   /*002. POST-запрос по созданию поста в блоге.*/
-  @BlogsControllerSwaggerDecorators.createPostForBlog
+  @BlogsSaControllerSwaggerDecorators.createPostForBlog
   @UseGuards(BasicAuthGuard)
   @Post(SETTINGS.BLOGS_SA_CREATE_POST_FOR_BLOG_PATH)
   @HttpCode(HttpStatus.CREATED)
   public async createPostForBlog(
-    @Param('blogId') id: string,
+    @Param('id') id: string,
     @Body() body: CreatePostForBlogInputDTO
   ): Promise<PostOutputDTO> {
     /*Просим сервис "PostsService" создать пост в блоге.*/
@@ -67,7 +68,7 @@ export class BlogsSAController {
   }
 
   /*003. GET-запрос по поиску блогов с пагинацией, используя query-параметры.*/
-  @BlogsControllerSwaggerDecorators.getBlogList
+  @BlogsSaControllerSwaggerDecorators.getBlogList
   @UseGuards(BasicAuthGuard)
   @Get(SETTINGS.BLOGS_SA_GET_BLOG_LIST_PATH)
   @HttpCode(HttpStatus.OK)
@@ -79,12 +80,12 @@ export class BlogsSAController {
   }
 
   /*004. GET-запрос по поиску постов с пагинацией по ID блога, используя query-параметры.*/
-  @BlogsControllerSwaggerDecorators.getPostListByBlogId
+  @BlogsSaControllerSwaggerDecorators.getPostListByBlogId
   @UseGuards(BasicAuthGuard)
   @Get(SETTINGS.BLOGS_SA_GET_POST_LIST_BY_BLOG_ID_PATH)
   @HttpCode(HttpStatus.OK)
   public async getPostListByBlogId(
-    @Param('blogId') id: string,
+    @Param('id') id: string,
     @Query() query: GetPostListByBlogIdQueryInputDTO,
     @ExtractUserDataFromRequest() userAccessJwtAuthContext: UserAccessJwtAuthContextDTO | null
   ): Promise<PaginationMetaDataOutputDTO<PostListOutputDTO>> {
@@ -93,7 +94,7 @@ export class BlogsSAController {
   }
 
   /*005. PUT-запрос по изменению блога по ID, используя URI-параметры.*/
-  @BlogsControllerSwaggerDecorators.updateBlogById
+  @BlogsSaControllerSwaggerDecorators.updateBlogById
   @UseGuards(BasicAuthGuard)
   @Put(SETTINGS.BLOGS_SA_UPDATE_BLOG_BY_ID_PATH)
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -103,21 +104,21 @@ export class BlogsSAController {
   }
 
   /*006. PUT-запрос по изменению поста по ID блога и ID поста, используя URI-параметры.*/
-  @PostsControllerSwaggerDecorators.updatePostById
+  @BlogsSaControllerSwaggerDecorators.updatePostByBlogIdAndPostId
   @UseGuards(BasicAuthGuard)
   @Put(SETTINGS.BLOGS_SA_UPDATE_POST_BY_BLOG_ID_AND_POST_ID_PATH)
   @HttpCode(HttpStatus.NO_CONTENT)
   public async updatePostByBlogIdAndPostId(
-    @Param('id') id: string,
+    @Param('postId') postId: string,
     @Param('blogId') blogId: string,
     @Body() body: UpdatePostByBlogIdAndPostIdInputDTO
   ): Promise<void> {
     /*Просим сервис "PostsService" изменить пост по ID.*/
-    await this.postsService.updateById(id, { ...body, blogId });
+    await this.postsService.updateById(postId, { ...body, blogId });
   }
 
   /*007. DELETE-запрос по удалению блога по ID, используя URI-параметры.*/
-  @BlogsControllerSwaggerDecorators.deleteBlogById
+  @BlogsSaControllerSwaggerDecorators.deleteBlogById
   @UseGuards(BasicAuthGuard)
   @Delete(SETTINGS.BLOGS_SA_DELETE_BLOG_BY_ID_PATH)
   @HttpCode(HttpStatus.NO_CONTENT)
@@ -126,13 +127,16 @@ export class BlogsSAController {
     await this.blogsService.markAsDeletedById(id);
   }
 
-  /*008. DELETE-запрос по удалению поста по ID, используя URI-параметры.*/
-  @PostsControllerSwaggerDecorators.deletePostById
+  /*008. DELETE-запрос по удалению поста по ID блога и ID поста, используя URI-параметры.*/
+  @BlogsSaControllerSwaggerDecorators.deletePostByBlogIdAndPostId
   @UseGuards(BasicAuthGuard)
-  @Delete(SETTINGS.DELETE_POST_BY_ID_SA_PATH)
+  @Delete(SETTINGS.BLOGS_SA_DELETE_POST_BY_BLOG_ID_AND_POST_ID_PATH)
   @HttpCode(HttpStatus.NO_CONTENT)
-  public async deletePostById(@Param('id') id: string, @Param('blogId') blogId: string): Promise<void> {
+  public async deletePostByBlogIdAndPostId(
+    @Param('postId') postId: string,
+    @Param('blogId') blogId: string
+  ): Promise<void> {
     /*Просим сервис "PostsService" soft удалить пост по ID.*/
-    await this.postsService.markAsDeletedById(id, blogId);
+    await this.postsService.markAsDeletedById(postId, blogId);
   }
 }

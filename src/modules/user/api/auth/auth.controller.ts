@@ -91,7 +91,7 @@ export class AuthController {
   /*006. POST-запрос по аутентификации пользователя по логину или email и паролю.*/
   @AuthControllerSwaggerDecorators.authUserByLoginOrEmail
   @UseGuards(IpAndUserAgentGuard, RequestRateLimitingGuard, LocalAuthGuard)
-  @Post(SETTINGS.AUTH_AUTH_USER_BY_LOGIN_OR_EMAIL_PATH)
+  @Post(SETTINGS.AUTH_AUTHENTICATE_USER_BY_LOGIN_OR_EMAIL_PATH)
   @HttpCode(HttpStatus.OK)
   public async authUserByLoginOrEmail(
     @Body() body: AuthUserByLoginOrEmailInputDTO,

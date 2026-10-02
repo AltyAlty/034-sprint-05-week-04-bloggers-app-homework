@@ -13,7 +13,7 @@ import { ErrorsMessagesSwaggerType } from '../../../validation/types/errors-mess
 import { UserOutputDTO } from '../../../../modules/user/api/users/output-dto/user.output-dto';
 import { PaginatedUserListSwaggerOutputDTO } from './swagger-output-dto/paginated-user-list.swagger-output-dto';
 
-export const UsersControllerSwaggerDecorators = {
+export const UsersSaControllerSwaggerDecorators = {
   get createUser() {
     return applyDecorators(
       ApiOperation({ summary: 'Create a user' }),
@@ -52,7 +52,7 @@ export const UsersControllerSwaggerDecorators = {
         description: 'Wrong authorization type or the basic auth credentials are incorrect',
         type: ErrorsMessagesSwaggerType,
       }),
-      ApiParam({ name: 'id', description: 'User ID', format: 'ObjectId' })
+      ApiParam({ name: 'id', description: 'User ID', format: 'uuid' })
     );
   },
 };

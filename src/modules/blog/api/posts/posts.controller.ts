@@ -1,5 +1,5 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Put, Query, UseGuards } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CommentsService } from '../../application/comments/comments.service';
 import { PostsService } from '../../application/posts/posts.service';
 import { CommentsQueryService } from '../../application/comments/comments.query-service';
@@ -20,6 +20,7 @@ import { ExtractUserDataFromRequest } from '../../../user/api/auth/decorators/pa
 
 /*Контроллер для постов.*/
 @ApiTags(SETTINGS.POSTS_API_TAG)
+@ApiBearerAuth()
 @Controller(SETTINGS.POSTS_PREFIX)
 export class PostsController {
   public constructor(
@@ -29,13 +30,13 @@ export class PostsController {
     private readonly commentsQueryService: CommentsQueryService
   ) {}
 
-  /*001. POST-запрос по созданию комментария в посте.*/
-  @PostsControllerSwaggerDecorators.createCommentForPost
+  /*001. POST-запрос по созданию комментария в посте по ID поста, используя URI-параметры.*/
+  @PostsControllerSwaggerDecorators.createCommentForPostByPostId
   @UseGuards(AccessJwtAuthGuard)
   @Post(SETTINGS.POSTS_CREATE_COMMENT_FOR_POST_PATH)
   @HttpCode(HttpStatus.CREATED)
-  public async createCommentForPost(
-    @Param('postId') id: string,
+  public async createCommentForPostByPostId(
+    @Param('id') id: string,
     @Body() body: CreateCommentForPostInputDTO,
     @ExtractUserDataFromRequest() userJwtAccessAuthContext: UserAccessJwtAuthContextDTO
   ): Promise<CommentOutputDTO> {
@@ -75,7 +76,7 @@ export class PostsController {
   @Get(SETTINGS.POSTS_GET_COMMENT_LIST_BY_POST_ID_PATH)
   @HttpCode(HttpStatus.OK)
   public async getCommentListByPostId(
-    @Param('postId') id: string,
+    @Param('id') id: string,
     @Query() query: GetCommentListByPostIdQueryInputDTO,
     @ExtractUserDataFromRequest() userAccessJwtAuthContext: UserAccessJwtAuthContextDTO | null
   ): Promise<PaginationMetaDataOutputDTO<CommentListOutputDTO>> {

@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Param, Put, UseGuards } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CommentsService } from '../../application/comments/comments.service';
 import { CommentsQueryService } from '../../application/comments/comments.query-service';
 import { UpdateCommentByIdInputDTO } from './input-dto/update-comment-by-id.input-dto';
@@ -14,6 +14,7 @@ import { ExtractUserDataFromRequest } from '../../../user/api/auth/decorators/pa
 
 /*Контроллер для комментариев.*/
 @ApiTags(SETTINGS.COMMENTS_API_TAG)
+@ApiBearerAuth()
 @Controller(SETTINGS.COMMENTS_PREFIX)
 export class CommentsController {
   public constructor(

@@ -65,7 +65,18 @@ export function swaggerSetup(app: INestApplication): void {
       Если положительное, то "controllerB" идет раньше "controllerA". Если 0, то порядок не меняется.*/
       tagsSorter: (controllerA: SwaggerController | string, controllerB: SwaggerController | string): number => {
         /*Указываем желаемый порядок отображения контроллеров.*/
-        const order: string[] = ['App', 'Auth', 'Security Devices', 'Users', 'Blogs', 'Posts', 'Comments', 'Testing'];
+        const order: string[] = [
+          'App',
+          'Auth',
+          'Security Devices',
+          'Users SA',
+          'Blogs SA',
+          'Blogs',
+          'Posts',
+          'Comments',
+          'Testing',
+        ];
+
         /*Получаем имена контроллеров.*/
         const controllerNameA: string = typeof controllerA === 'string' ? controllerA : controllerA.get('name');
         const controllerNameB: string = typeof controllerB === 'string' ? controllerB : controllerB.get('name');

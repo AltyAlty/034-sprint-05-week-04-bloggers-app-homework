@@ -3,7 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { AuthController } from './api/auth/auth.controller';
 import { SecurityDevicesController } from './api/security-devices/security-devices.controller';
-import { UsersSAController } from './api/users/users-sa.controller';
+import { UsersSaController } from './api/users/users-sa.controller';
 import { AuthService } from './application/auth/auth.service';
 import { UsersService } from './application/users/users.service';
 import { SecurityDevicesQueryService } from './application/security-devices/security-devices.query-service';
@@ -23,7 +23,7 @@ import { AuthConfigModule } from './config/auth-config.module';
 /*Модуль для пользователей.*/
 @Module({
   imports: [AuthConfigModule, CoreModule, PassportModule.register({ defaultStrategy: 'access-jwt' })],
-  controllers: [AuthController, SecurityDevicesController, UsersSAController],
+  controllers: [AuthController, SecurityDevicesController, UsersSaController],
   providers: [
     LocalAuthStrategy,
     AccessJwtAuthStrategy,

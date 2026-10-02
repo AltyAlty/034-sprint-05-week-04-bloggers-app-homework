@@ -263,7 +263,7 @@
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-Структура версии приложения с использованием Express.js и MongoDB:
+Структура версии приложения с использованием Express.js + MongoDB + Mongoose:
 0.1 "/src/index.ts" - точка входа приложения.
 0.2 "/src/setup-app.util.ts" - настройка приложения.
 
@@ -425,7 +425,7 @@
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
-Структура версии приложения с использованием NestJS и MongoDB:
+Структура версии приложения с использованием NestJS + MongoDB + Mongoose:
 0.1 "/src/main.ts" - точка входа приложения.
 0.2 "/src/app.module.ts" - главный обязательный модуль "AppModule".
 0.3 "/src/app.controller.ts" - необязательный контроллер для модуля "AppModule".
@@ -514,5 +514,91 @@
 6.3 "/__tests__/test-date/" - данные, используемые в тестировании приложения.
 6.4 "/__tests__/test-doubles/" - моки и шпионы, используемые в тестировании приложения.
 6.5 "/__tests__/utils/" - утилиты, используемые в тестировании приложения.
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+Структура версии приложения с использованием NestJS + PostgreSQL + TypeORM (DataSource):
+0.1 "/src/main.ts" - точка входа приложения.
+0.2 "/src/app.module.ts" - главный обязательный модуль "AppModule".
+0.3 "/src/app.controller.ts" - необязательный контроллер для модуля "AppModule".
+0.4 "/src/app.service.ts" - необязательный сервис для модуля "AppModule".
+0.5 "/src/config.module.ts" - конфигурационный модуль для работы с файлами ".env".
+
+1. "/src/core/" - общий код для всего приложения.
+1.1 "/src/core/core.module.ts" - глобальный модуль, предоставляющий общий функционал для всего приложения.
+1.2 "/src/core/config/core.config.ts" - конфигурация по работе с переменными окружения необходимыми для общей работы приложения.
+1.3 "/src/core/decorators/transforamtion/" - декораторы, использующие библиотеку class-transformer.
+1.4 "/src/core/exception-filters/domain/domain.exception-filter.ts" - фильтр исключений "DomainException".
+1.5 "/src/core/exceptions/domain/domain.exception.ts" - класс исключений "DomainException".
+1.6 "/src/core/guards/access-jwt-auth/" - гард для авторизации по Access JWT.
+1.7 "/src/core/guards/basic-auth/basic-auth.guard.ts" - гард для basic авторизации.
+1.8 "/src/core/guards/ip-and-user-agent/ip-and-user-agent.guard.ts" - гард для проверки наличия заголовка "user-agent" и IP-адреса пользователя в объекте запроса.
+1.9 "/src/core/guards/local-auth/" - гард для авторизации по логину и паролю.
+1.10 "/src/core/guards/optional-access-jwt-auth/" - гард для опциональной авторизации по Access JWT.
+1.11 "/src/core/guards/refresh-jwt-auth/" - гард для авторизации по Refresh JWT.
+1.12 "/src/core/guards/request-rate-limiting/request-rate-limiting.guard.ts" - гард для ограничения частоты запросов.
+1.13 "/src/core/modules/notification/notification.module.ts" - модуль для работы с уведомлениями.
+1.14 "/src/core/modules/notification/config/notification.config.ts" - конфигурация по работе с переменными окружения необходимыми для работы с уведомлениями.
+1.15 "/src/core/modules/notification/config/notification-config.module.ts" - вспомогательный модуль для раздачи переменных из класса "NotificationConfig".
+1.16 "/src/core/modules/notification/email-manager/email.manager.ts" - менеджер для работы с библиотекой nodemailer.
+1.17 "/src/core/pagiantion/input-dto/" - Input DTO для пагинации.
+1.18 "/src/core/pagiantion/output-dto/" - Output DTO для пагинации.
+1.19 "/src/core/security/cryptography/argon2.adapter.ts" - адаптер для работы с библиотекой @node-rs/argon2.
+1.20 "/src/core/security/cryptography/bcrypt.adapter.ts" - адаптер для работы с библиотекой bcrypt.
+1.21 "/src/core/settings/settings.ts" - глобальные настройки приложения.
+1.22 "/src/core/swagger/decorators/" - декораторы для документации Swagger.
+1.23 "/src/core/swagger/types/swagger-sort-enums.ts" - дополнительные типы для документации Swagger.
+1.24 "/src/core/utils/config/config-validation.util.ts" - утилиты для конфигураций по работе с переменными окружения.
+1.25 "/src/core/utils/email/normalize-email.util.ts" - утилита для нормализации email домена Google.
+1.26 "/src/core/validation/constraints/" - параметры ограничений для валидации.
+1.27 "/src/core/validation/types/" - типы для валидации.
+
+2. "/src/modules/" - основные модули приложения.
+
+2.1 "/src/modules/blog/" - код для модуля для блогов, постов и комментариев.
+2.1.1 "/src/modules/blog/blog.module.ts" - модуль для блогов, постов и комментариев.
+2.1.2 "/src/modules/blog/api/blogs/" - контроллер, Input DTO и Output DTO для блогов.
+2.1.3 "/src/modules/blog/api/comments/" - контроллер, Input DTO и Output DTO для комментариев.
+2.1.4 "/src/modules/blog/api/posts/" - контроллер, Input DTO и Output DTO для постов.
+2.1.5 "/src/modules/blog/application/blogs/" - сервисы для блогов.
+2.1.6 "/src/modules/blog/application/comments/" - сервисы для комментариев.
+2.1.7 "/src/modules/blog/application/posts/" - сервисы для постов.
+2.1.8 "/src/modules/blog/domain/comments/domain-dto/" - Domain DTO для комментариев.
+2.1.9 "/src/modules/blog/domain/posts/domain-dto/" - Domain DTO для постов.
+2.1.10 "/src/modules/blog/infrastructure/blogs/" - репозитории для блогов.
+2.1.11 "/src/modules/blog/infrastructure/comments/" - репозитории для комментариев.
+2.1.12 "/src/modules/blog/infrastructure/posts/" - репозитории для постов.
+
+2.2 "/src/modules/user/" - код для модуля для пользователей.
+2.2.1 "/src/modules/user/user.module.ts" - модуль для пользователей.
+2.2.2 "/src/modules/user/api/auth/" - контроллер, декораторы, Input DTO и Output DTO для работы с аутентификацией и авторизацией.
+2.2.3 "/src/modules/user/api/security-devices/" - контроллер, Input DTO и Output DTO для пользовательских устройств.
+2.2.4 "/src/modules/user/api/users/" - контроллер, Input DTO и Output DTO для пользователей.
+2.2.5 "/src/modules/user/application/auth/" - сервисы для для работы с аутентификацией и авторизацией.
+2.2.6 "/src/modules/user/application/security-devices/" - сервисы для пользователей.
+2.2.7 "/src/modules/user/application/users/" - сервисы для пользовательских устройств.
+2.2.8 "/src/modules/user/config/auth.config.ts" - конфигурация по работе с переменными окружения необходимыми для аутентификации и авторизации.
+2.2.9 "/src/modules/user/config/auth-config.module.ts" - вспомогательный модуль для раздачи переменных из класса "AuthConfig".
+2.2.10 "/src/modules/user/infrastructure/auth/" - репозитории для работы с аутентификацией и авторизацией.
+2.2.11 "/src/modules/user/infrastructure/security-devices/" - репозитории для пользователей.
+2.2.12 "/src/modules/user/infrastructure/users/" - репозитории для пользовательских устройств.
+
+3. "/src/setup/" - код для конфигурирования приложения.
+3.1 "/src/setup/app.setup.ts" - функция для конфигурирования экземпляров приложения NestJS.
+3.2 "/src/setup/global-prefix.setup.ts" - функция для установки глобального префикса ко всем маршрутам приложения.
+3.3 "/src/setup/pipes.setup.ts" - функция для настройки pipes в приложении.
+3.4 "/src/setup/swagger.setup.ts" - функция для генерации документации Swagger.
+
+4. "/src/testing/" - код для модуля для тестирования приложения.
+4.1 "/src/testing/testing.module.ts" - модуль для тестирования приложения.
+4.2 "/src/testing/api/testing.controller.ts" - контроллер для тестирования приложения.
+4.3 "/src/testing/application/testing.service.ts" - сервис для для тестирования приложения.
+
+5. "/__tests__/" - код, связанный с тестированием приложения.
+5.1 "/__tests__/integration/" - интеграционные тесты.
+5.2 "/__tests__/setup/" - настройка тестов.
+5.3 "/__tests__/test-date/" - данные, используемые в тестировании приложения.
+5.4 "/__tests__/test-doubles/" - моки и шпионы, используемые в тестировании приложения.
+5.5 "/__tests__/utils/" - утилиты, используемые в тестировании приложения.
 
 /*--------------------------------------------------------------------------------------------------------------------*/

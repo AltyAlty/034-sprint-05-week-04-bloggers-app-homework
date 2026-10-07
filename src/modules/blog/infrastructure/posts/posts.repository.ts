@@ -131,7 +131,7 @@ export class PostsRepository {
   }
 
   /*Метод для soft удаления постов по ID блога в БД.*/
-  public async markAllAsDeleteByBlogId(id: string): Promise<void> {
+  public async markAllAsDeletedByBlogId(id: string): Promise<void> {
     await this.dataSource.query(`UPDATE posts SET deleted_at = $1 WHERE blog_id = $2`, [new Date(), id]);
   }
 

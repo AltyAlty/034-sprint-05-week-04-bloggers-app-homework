@@ -272,7 +272,7 @@ export class PostsService {
     /*Просим репозиторий "PostsRepository" soft удалить данные о лайках постов по ID блога в БД.*/
     await this.postsRepository.markAllPostLikeDataAsDeletedByBlogId(id);
     /*Просим репозиторий "PostsRepository" soft удалить посты по ID блога в БД.*/
-    await this.postsRepository.markAllAsDeleteByBlogId(id);
+    await this.postsRepository.markAllAsDeletedByBlogId(id);
   }
 
   /*Метод для hard удаления постов по ID блога.*/

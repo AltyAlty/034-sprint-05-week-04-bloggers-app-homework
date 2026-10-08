@@ -155,7 +155,7 @@ export class CommentsRepository {
   /*Метод для soft удаления данных о лайке комментария по ID комментария и ID пользователя в БД.*/
   public async markCommentLikeDataAsDeletedByCommentIdAndUserId(commentId: string, userId: string): Promise<void> {
     await this.dataSource.query(
-      `UPDATE comment_likes_data SET deleted_at = $1 WHERE comment_id = $1 AND user_id = $2`,
+      `UPDATE comment_likes_data SET deleted_at = $1 WHERE comment_id = $2 AND user_id = $3`,
       [new Date(), commentId, userId]
     );
   }

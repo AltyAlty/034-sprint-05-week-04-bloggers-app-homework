@@ -142,7 +142,7 @@ export class PostsRepository {
 
   /*Метод для soft удаления данных о лайке поста по ID поста и ID пользователя в БД.*/
   public async markPostLikeDataAsDeletedByPostIdAndUserId(postId: string, userId: string): Promise<void> {
-    await this.dataSource.query(`UPDATE post_likes_data SET deleted_at = $1 WHERE post_id = $1 AND user_id = $2`, [
+    await this.dataSource.query(`UPDATE post_likes_data SET deleted_at = $1 WHERE post_id = $2 AND user_id = $3`, [
       new Date(),
       postId,
       userId,
